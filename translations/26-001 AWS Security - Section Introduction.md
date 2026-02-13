@@ -1,21 +1,27 @@
 ---
-source: 26 - AWS Security & Encryption KMS, SSM Parameter Store, Shield, WAF\001 AWS Security - Section Introduction_zh.srt
+source: 26 - Security & Compliance\001 AWS Security - Section Introduction_zh.srt
 ---
 
-这一部分是最重要的一部分, 考试将询问您许多有关安全性的问题｡ 
+## 学习目标
 
-你们可能已经注意到, 在之前的所有课程中, 我都多次谈到了安全性｡ 
+- 理解本节涵盖的安全与合规主题范围：加密、密钥管理、凭证与密钥存储、边界防护与威胁检测。 
 
-我说了不同的AWS服务是如何与安全性集成的, 我相信您对此有了很好的了解,
+## 重点速览
 
-但我想用一整节的时间来回顾我们学到的知识, 了解KMS､ 正确加密､
+- 本章将介绍 KMS、ACM、SSM Parameter Store、Secrets Manager、WAF、Shield、GuardDuty、Inspector 等服务的核心功能与适用场景。 
 
-参数存储等｡ 这一部分将真正为您在安全方面所看到的一切带来光明｡
+## 详细内容
 
-我希望你会喜欢｡ 
+- 章节结构：
+  - 加密基础（KMS、Multi-Region Keys、加密最佳实践）。
+  - 凭证管理（SSM Parameter Store、Secrets Manager）与证书管理（ACM）。
+  - 边界与应用层防护（WAF、Shield、Firewall Manager）以及检测/审计工具（GuardDuty、Inspector）。
 
-它是非常现实的世界为导向｡ 
+## 自测问题
 
-我们将用AWS Lambda来练习｡ 
+- 说明在设计安全架构时为何需要将密钥管理与凭证存储分离。 
+- 简述本章中三项服务如何协同构建防护与检测能力。 
 
-那么, 让我们一起来了解一下安全性｡
+## 术语与易错点（将在全部章节完成后汇总）
+
+- （统一汇总，稍后添加）

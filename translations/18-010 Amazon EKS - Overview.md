@@ -1,3 +1,24 @@
+**学习目标**
+- 理解 Amazon EKS 的定位与 Kubernetes 基本概念
+- 掌握 EKS 的节点类型与数据存储选项
+
+**重点速览**
+- Amazon EKS 是 AWS 的托管 Kubernetes 服务，支持 EC2 与 Fargate 启动模式
+- 可使用托管节点组（Managed）、自管理节点或 Fargate，无需或少量运维节点
+- 存储通过 CSI 驱动挂载，常见选项包含 EBS、EFS、FSx 等；EFS 可与 Fargate 配合使用
+
+**详细内容**
+Kubernetes 是开源容器编排平台，使用 Pod 模型管理容器。Amazon EKS 提供托管控制平面并支持多种节点部署方式：
+- 托管节点组（Managed Node Group）：AWS 帮助创建并维护节点（基于 EC2 与 ASG）
+- 自管理节点：用户自行创建与注册节点，适合高度自定义场景
+- Fargate：无服务器模式，不需管理节点，适合简化运维
+
+存储方面需定义 StorageClass 并使用 CSI 驱动以支持 EBS、EFS（跨 AZ 共享，且可与 Fargate 配合）与 FSx。EKS 适合已有 Kubernetes 经验或需要多云/可移植性的团队。
+
+**自测问题**
+- EKS 与 ECS 在适用场景上有何不同？
+- EKS 支持哪几类节点部署方式？
+- 哪种存储可以在 Fargate 模式下使用？
 ---
 source: 18 - Containers on AWS ECS, Fargate, ECR & EKS\010 Amazon EKS - Overview_zh.srt
 ---

@@ -1,3 +1,25 @@
+**学习目标**
+- 理解什么是 Docker、容器与镜像
+- 了解镜像仓库（Docker Hub、Amazon ECR）的作用
+- 区别容器与虚拟机的关键差异及常见用例
+
+**重点速览**
+- Docker 将应用与依赖打包为可移植的容器镜像
+- 镜像存放在仓库（Docker Hub / Amazon ECR），运行时成为容器
+- 容器比虚拟机更轻量，共享宿主机内核，适合微服务与弹性部署
+- 在 AWS 上可用 ECS、EKS 和 Fargate 管理容器生命周期
+
+**详细内容**
+Docker 是一种容器化平台，使用 Dockerfile 构建镜像，镜像推送到仓库后可在任意宿主上拉取并运行为容器。镜像仓库包括公共的 Docker Hub，以及私有或公共的 Amazon ECR（后端存储在 S3）。
+
+容器与虚拟机的区别：虚拟机包含完整的来宾操作系统并通过 hypervisor 隔离；容器共享宿主机内核、启动更快、资源开销更小，但隔离性略弱。典型用例是微服务、按需扩展与持续交付。
+
+在 AWS 上的容器管理选项：ECS（原生）、EKS（托管 Kubernetes）和 Fargate（无服务器运行）。选择依据包括团队熟悉度、是否需要标准化 Kubernetes API 以及是否希望免运维管理节点。
+
+**自测问题**
+- Docker 镜像与容器有什么区别？
+- 为什么容器比虚拟机更节省资源？
+- Amazon ECR 提供了哪些便捷功能？
 ---
 source: 18 - Containers on AWS ECS, Fargate, ECR & EKS\001 Docker Introduction_zh.srt
 ---

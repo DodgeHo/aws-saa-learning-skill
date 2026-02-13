@@ -1,59 +1,29 @@
 ---
-source: 25 - Identity and Access Management (IAM) - Advanced\008 AWS Directory Services - Hands On_zh.srt
+source: 25 - Identity & Access\008 AWS Directory Services - Hands On_zh.srt
 ---
 
-讲师：如果你在控制台上输入目录服务,
+## 学习目标
 
-我们可以看到提供给我们的不同选项｡
+- 通过实操在 VPC 中部署 AWS Managed Microsoft AD 或配置 AD Connector，并在 EC2 上完成域加入验证。 
 
-我将从较高的层次介绍它们,
+## 重点速览
 
-因为单独设置它们可能会很复杂｡
+- Hands-on 包含：在指定 VPC 子网中创建目录、配置安全组/网络、在 Windows EC2 上加入域并验证域用户登录。 
 
-但是我们有四个选项, 实际上第四个是Amazon
+## 详细内容
 
-Cognito User Pool, 它会将您重定向到Cognito服务｡
+- 实操步骤（高层）：
+  - 在 AWS Directory Services 控制台选择 Managed Microsoft AD 或 AD Connector，配置目录子网与管理员账户。 
+  - 在目标 VPC 中启动 Windows EC2，配置 DNS 指向目录并通过 System Properties 加入域，使用域用户登录验证。 
 
-因此, 不要将此计算到目录服务中｡ 
+- 注意事项：
+  - 确保网络（路由、安全组、NACL）允许域控制器所需端口（如 Kerberos、LDAP、DNS）；验证时间同步（NTP）。 
 
-因此, 我们有AWS托管的Microsoft
+## 自测问题
 
-ID, 其中我们可以有一个将与AWS云集成的活动目录, 并且可以与您的内部目录建立信任关系｡
+- 描述在 EC2 上加入域时常见的网络或 DNS 问题及排查步骤。 
+- 在使用 AD Connector 时，为什么需要保证与本地 AD 的稳定网络通道？
 
-为了设置它, 您可以看到它有两个附加项｡ 
+## 术语与易错点（将在全部章节完成后汇总）
 
-标准版最多30, 000个对象,
-
-企业版最多500, 000个对象｡
-
-所以, 多了很多｡ 
-
-然后, 您需要进行设置, 我不打算详细介绍设置过程,
-
-因为这是针对AD的, 您不需要了解这些内容就可以参加考试｡
-
-下一个是简单AD, 它将是一个独立的托管目录,
-
-具有与Active Directory兼容的API,
-
-但无法连接到您的内部部署Active Directory｡
-
-或AD连接器, 它是一个代理, 用于将目录请求重定向到您现有的内部Microsoft
-
-Active Directory｡
-
-它的设计, 你有两个层次｡ 
-
-你有一个连接器最多500个用户或者你有一个连接器最多5,000个用户,
-
-好吗？
-
-记住, 第一个支持MFA｡ 
-
-第二个是独立的,
-
-AD连接器是一个代理｡
-
-好了, 这节课就讲到这里｡ 
-
-我们下节课再见｡
+- （统一汇总，稍后添加）

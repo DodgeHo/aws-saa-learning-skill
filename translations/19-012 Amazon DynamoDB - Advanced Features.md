@@ -1,3 +1,24 @@
+**学习目标**
+- 了解 DynamoDB 的高级功能：DAX、Streams、全局表、TTL、备份与导出/导入
+- 能在架构中选择合适的缓存、跨区复制与流处理方案
+
+**重点速览**
+- DAX 提供对 DynamoDB 的内存级别只读缓存（微秒级读取延迟），与应用逻辑兼容无需改动 API
+- DynamoDB Streams 捕获表变更，可触发 Lambda 或通过 Kinesis 适配器供更多消费者使用
+- 全局表支持主动-主动跨区域复制；TTL、PITR 与按需备份用于数据生命周期和恢复
+
+**详细内容**
+DAX（DynamoDB Accelerator）：完全托管的高速缓存，用于显著降低读取延迟，无需变更应用调用逻辑，适合读密集型场景。与 ElastiCache 不同，DAX 专为 DynamoDB 的查询/项缓存优化。
+
+DynamoDB Streams：记录表上的创建/更新/删除事件（默认保留 24 小时），常与 Lambda 触发器结合用于实时处理、衍生表写入或发送到下游系统；若需要更长保留或更多消费者，可将变更导入到 Kinesis Data Streams。
+
+全局表（Global Tables）：通过 Streams 实现跨区域双向复制，提供低延迟的跨区域读写能力。备份策略包括按需备份与持续的时间点恢复（PITR，最多 35 天）。表可导出到 S3（DynamoDB JSON / ION）用于分析或长期归档，也可从 S3 导入创建新表而不消耗写容量。
+
+**自测问题**
+- DAX 与 ElastiCache 在 DynamoDB 场景下的主要差异是什么？
+- DynamoDB Streams 的典型用途有哪些？
+- 要实现跨区域低延迟写入，应使用什么特性？
+
 ---
 source: 19 - Serverless Overviews from a Solution Architect Perspective\012 Amazon DynamoDB - Advanced Features_zh.srt
 ---

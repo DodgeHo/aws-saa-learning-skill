@@ -1,3 +1,24 @@
+**学习目标**
+- 理解常见的 ECS 解决方案架构模式（事件驱动、定时任务、队列驱动）
+- 掌握使用 EventBridge、SQS、ALB 与任务角色的集成方式
+
+**重点速览**
+- EventBridge 可触发 ECS 任务（事件驱动或定时调度）
+- S3 + EventBridge + ECS 常用于处理上传对象并将结果写入 DynamoDB
+- SQS 与 ECS 配合可实现队列驱动的可扩展消息处理，结合 ECS 服务自动缩放
+
+**详细内容**
+示例架构：
+- S3 上传事件通过 EventBridge 触发 ECS 任务（Fargate），任务使用任务角色访问 S3、处理对象并将结果写入 DynamoDB，实现无服务器的数据处理流水线。
+- 定时任务：EventBridge 定时规则每小时触发 ECS 任务用于批处理作业。
+- 队列集成：应用将消息推送到 SQS 队列，ECS 服务从队列拉取并处理消息；结合服务自动缩放，可根据队列长度动态调整任务数量。
+
+EventBridge 还可接收 ECS 任务生命周期事件（如任务停止），用于触发 SNS 通知或其他自动化响应。
+
+**自测问题**
+- 如何用 EventBridge 实现定时运行 ECS 任务？
+- SQS 与 ECS 结合时如何保证处理能力随队列增长而扩展？
+- 在事件驱动架构中，为什么需要为任务配置任务角色？
 ---
 source: 18 - Containers on AWS ECS, Fargate, ECR & EKS\007 Amazon ECS - Solutions Architectures_zh.srt
 ---

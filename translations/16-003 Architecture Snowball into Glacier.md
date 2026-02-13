@@ -1,27 +1,22 @@
----
-source: 16 - AWS Storage Extras\003 Architecture Snowball into Glacier_zh.srt
----
+```markdown
+**学习目标**
 
-教师：所以这是一个很短的讲座,
+- 了解 Snowball 将数据导入 AWS 时与 Glacier 的关系。
+- 掌握把离线导入数据归档到 Glacier 的标准架构流程。
 
-围绕着考试中可能出现的一个场景｡
+**重点速览**
 
-您希望让Snowball将数据直接导入Glacier,
+- Snowball 不能直接写入 Glacier；必须先将数据导入 Amazon S3，然后通过生命周期规则转为 Glacier/Glacier Deep Archive。
+- 典型流程：Snowball → S3 桶 → S3 生命周期规则 → Glacier。
 
-但Snowball不能将数据直接导入Glacier｡
+**详细内容**
 
-您的解决方案是首先使用AmazonS3,
+- 场景：需要将大量离线数据归档到 Glacier，但 Snowball 设备本身无法直接写入 Glacier 存储类。正确做法是将 Snowball 的数据导入目标 S3 桶，然后为该桶或对象设置生命周期策略，将对象自动迁移到 Glacier/Deep Archive。
+- 考试要点：若题目问“如何把 Snowball 导入的数据归档到 Glacier？”，正确答案通常为先导入 S3，再配置生命周期策略，不是直接从 Snowball 写入 Glacier。
 
-然后创建一个生命周期策略, 将这些对象转换到AmazonGlacier｡
+**自测问题**
 
-所以一旦你知道了, 事情就很简单了｡ 
+1. Snowball 能否将数据直接写入 Glacier？为什么？
+2. 描述把 Snowball 导入的数据移动到 Glacier 的步骤。
 
-Snowball将数据导入到Amazon
-
-S3中, 由于S3的生命周期策略, 数据被转换到Amazon
-
-Glacier中｡
-
-这是考试时要记住的｡ 
-
-我希望你们喜欢, 下节课再见｡
+```

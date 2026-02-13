@@ -1,3 +1,21 @@
+**学习目标**
+- 理解“无服务器（Serverless）”的概念与典型组件
+- 识别无服务器参考架构中的常见服务（Lambda、API Gateway、DynamoDB、Cognito、S3）
+
+**重点速览**
+- 无服务器并非没有服务器，而是无需管理底层服务器（按需托管）
+- 无服务器架构常由 API Gateway、Lambda、DynamoDB、S3、Cognito、SNS/SQS 等服务组合而成
+- 付费以使用量计费，具备自动扩展能力，适合事件驱动与按需计算场景
+
+**详细内容**
+“无服务器”强调的是托管与按需付费：开发者只需部署代码或功能，底层计算、数据库与消息服务由云提供商按需管理和扩缩。典型的无服务器参考架构示例：用户经由 CloudFront/S3 获取静态内容、通过 Cognito 完成认证、前端调用 API Gateway，API Gateway 触发 Lambda，Lambda 读写 DynamoDB；SNS、SQS、Kinesis、Aurora Serverless、Step Functions 与 Fargate 亦常出现在无服务器方案中。
+
+无服务器的优点包括：免运维、按需计费、自动扩展与与其他托管服务的深度集成；但也需关注冷启动、运行时限制与供应商锁定等权衡。
+
+**自测问题**
+- 无服务器与传统自建服务器的主要区别是什么？
+- 列出构成无服务器应用的三个核心 AWS 服务及其作用。
+- 何时应考虑使用 Aurora Serverless 或 Fargate？
 ---
 source: 19 - Serverless Overviews from a Solution Architect Perspective\002 Serverless Introduction_zh.srt
 ---

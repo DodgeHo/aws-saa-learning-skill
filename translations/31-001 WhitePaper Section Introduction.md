@@ -1,31 +1,17 @@
----
-source: 31 - WhitePapers and Architectures - AWS Certified Solutions Architect Associate\001 WhitePaper Section Introduction_zh.srt
----
+## 学习目标
 
-Stephane：好的,
+- 理解本章目标：阅读与应用 AWS 白皮书与架构示例以指导设计决策。
 
-这一部分是关于学习白皮书和一些体系结构文档的,
+## 重点速览
 
-这些实际上并不是考试的强制要求, 但您绝对需要了解一些关于“体系结构良好的框架”和“灾难恢复”的知识, 以及其他一些知识｡
+- 本章包含 Well-Architected、Trusted Advisor 与架构示例，侧重将理论转化为可实施的设计检查项。
 
-所以这一节将介绍这一点｡ 
+## 详细内容
 
-我们将看到Well-Architected Framework白皮书,
+1. 白皮书和最佳实践文档帮助把握服务成熟度、设计权衡与常见反模式。
+2. 推荐活动：阅读关键白皮书（Well-Architected）、对照架构示例并在真实场景中演练核对表。
 
-老实说, 我会尽可能让它不那么枯燥, 但对某些人来说, 它不是很吸引人,
+## 自测问题
 
-Well-Architected Tool（我认为它很棒）､ AWS Trusted Advisor（AWS可信顾问）､
-
-一些参考架构资源, 这些都非常酷, 不要错过｡
-
-它面向现实世界,
-
-因此我们需要使用这些链接作为真正的解决方案架构师,
-
-最后是“基于AWS的灾难恢复”白皮书｡
-
-这本书有点无聊, 但它对考试非常重要,
-
-所以我们得看一下, 实际上, 我敢肯定, 到最后你们会发现这本书很有趣
-
-好了, 我们开始吧｡
+1. 列出两份对 SAA 考试与实战最有价值的 AWS 白皮书。
+2. 如何把 Well-Architected 的五大支柱应用到一个已有的系统上？

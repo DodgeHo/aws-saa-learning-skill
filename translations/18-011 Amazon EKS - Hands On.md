@@ -1,3 +1,25 @@
+**学习目标**
+- 熟悉在控制台创建 EKS 集群的基本步骤与注意项
+- 理解 managed node group 与 Fargate profile 的区别与创建要点
+
+**重点速览**
+- 创建 EKS 集群需先准备 IAM 服务角色与必要权限
+- 创建集群后可添加托管节点组（自动管理 EC2 节点）或配置 Fargate 配置文件以运行无服务器 Pod
+- 节点角色需要附加 EKS 节点相关策略与 ECR 只读权限以拉取镜像
+
+**详细内容**
+操作要点：
+1. 在 IAM 中为 EKS 创建集群角色并附加文档中要求的权限。
+2. 创建集群时选择版本、VPC 与子网、API 访问方式（公共/私有）及日志设置。
+3. 为节点创建节点角色并附加 AmazonEKSWorkerNodePolicy、AmazonEC2ContainerRegistryReadOnly 等策略。
+4. 添加托管节点组或 Fargate 配置文件：托管节点组由 AWS 管理 EC2 实例并使用 ASG；Fargate 则无需管理实例。
+
+清理：删除节点组并删除集群，创建时如果用了托管资源，删除会触发相应的清理流程。EKS 的操作较复杂，常作为专门课程讲解。
+
+**自测问题**
+- 创建 EKS 集群前需要准备哪些 IAM 角色？
+- 托管节点组与自管理节点的主要差异是什么？
+- 如果不想管理 EC2 实例，应该如何在 EKS 上运行 Pod？
 ---
 source: 18 - Containers on AWS ECS, Fargate, ECR & EKS\011 Amazon EKS - Hands On_zh.srt
 ---

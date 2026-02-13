@@ -1,131 +1,31 @@
 ---
-source: 25 - Identity and Access Management (IAM) - Advanced\003 IAM - Advanced Policies_zh.srt
+source: 25 - Identity & Access\003 IAM - Advanced Policies_zh.srt
 ---
 
-Stephane：那么, 现在, 让我们来讨论IAM条件以及它们对您的策略可能意味着什么｡
+## 学习目标
 
-因此, 正如您所知, 它们适用于IAM中的策略｡ 
+- 掌握 IAM 策略的高级用法：策略条件（Condition）、策略模拟（Policy Simulator）、基于标签的访问控制（ABAC）与委托角色的最佳实践。 
 
-这可能是针对用户的策略, 也可能是针对资源策略（例如,
+## 重点速览
 
-针对S3存储桶）的策略, 或者可能是端点策略, 等等｡
+- 高级 IAM 策略常包括使用 `Condition` 限制来源 IP、MFA 或资源标签；ABAC 使用标签简化大规模策略管理。 
+- 使用角色委托（assume-role）结合最小权限原则与短期凭证实现安全的跨账户/服务访问。 
 
-所以, 真的, 什么都行｡ 
+## 详细内容
 
-第一个是aws：SourceIP｡ 
+- 策略条件与场景：
+  - 常见 condition keys 包括 `aws:SourceIp`, `aws:MultiFactorAuthPresent`, `aws:RequestTag`, `aws:PrincipalTag` 等，用于构造细粒度访问规则。 
+  - ABAC（基于标签的访问控制）通过在资源与主体上使用一致标签来减少策略数量，适用于动态环境。 
 
-这用于限制进行API调用的客户端IP｡
+- 策略测试与治理：
+  - 使用 IAM Policy Simulator 模拟策略效果与交互（SCP + IAM + resource-based policy），并结合 CloudTrail 审计真实调用。 
+  - 设计时注意 deny 优先规则、显式 deny 与隐式 deny 的区别，避免策略互相覆盖导致意外拒绝。 
 
-如果我们看一下这里的这个,
+## 自测问题
 
-如果不是IP地址, 则所有内容上都有一个“拒绝”星号｡
+- 写出一个使用 `aws:SourceIp` 条件限制只允许来自公司内网 IP 的策略示例思路。 
+- 描述 ABAC 的优点与潜在风险。 
 
-然后我们有一个包含两个CIDR和两个IP地址范围的列表｡
+## 术语与易错点（将在全部章节完成后汇总）
 
-因此, 这意味着除非客户端从这些IP地址中发出API调用,
-
-否则API调用将被拒绝｡
-
-例如, 这可用于将AWS的使用限制为仅限于贵公司的网络,
-
-从而确保只有贵公司可以访问自己的AWS环境｡
-
-这是其中一个条件｡ 
-
-然后我们有aws：请求的区域｡ 
-
-这也是一个全球性的问题,
-
-因为它始于AWS, 并且限制了API调用的区域｡
-
-因此, 如果我们在eu-central-1或eu-west-1区域中,
-
-则在此示例中, 我们拒绝EC2､ RDS和DynamoDB上的任何内容｡
-
-好的, 这里我们拒绝访问特定区域的这些服务｡
-
-这可以更全面地应用于其组织SCP,
-
-以拒绝或仅允许访问特定区域｡
-
-接下来, 我们有ec2：ResourceTag｡ 
-
-因此, 正如您现在所看到的, 该标记的前缀是EC2,
-
-因此, 这适用于EC2实例上的标记｡
-
-因此, 在这里, 我们允许启动和停止实例, 好的, 对于任何实例,
-
-如果ResourceTag/Project等于DataAnalytics｡
-
-因此, 这意味着如果EC2实例具有正确的标记, 即Project和DataAnalytics,
-
-那么我们就可以了｡
-
-但是, 正如你所看到的, 还有aws：PrincipalTag,
-
-这适用于你的用户标记｡
-
-因此, 它不是EC2实例标记, 而是用户标记｡ 
-
-因此, 您的用户也必须是部门数据的一部分,
-
-才能执行这些操作｡
-
-我们有aws：MultiFactorAuthPresent来强制进行多因素身份验证｡
-
-所以你可以看一下｡ 
-
-但是用户可以在EC2上做任何事情,
-
-但是他们只能停止和终止具有MultiFactorAuthenticationPresent的实例,
-
-所以这是对false的拒绝｡
-
-现在, 我们来看一下S3存储桶的IAM策略｡ 
-
-这是一个桶策略, 我们有两个语句｡ 
-
-第一个是ListBucket,
-
-这适用于这里的arn, 所以s3：：：test.
-
-因为它是一个存储桶级别的权限,
-
-因此, 我们必须指定存储桶本身｡
-
-但是如果我们看一下GetObject,
-
-PutObject, 和DeleteObject, 这适用于bucket中的对象, 所以arn会不同,
-
-你会用/* 来表示bucket中的所有对象.
-
-这就是为什么这里有一个不同的arn,
-
-因为这是一个对象级权限｡
-
-同样, 这也是考试中可能出现的问题｡ 
-
-现在, 让我们看一下资源策略和aws：PrincipalOrgID｡
-
-因此, 此处的条件aws：PrincipalOrgID可用于将资源策略限制为仅属于AWS组织成员的帐户｡
-
-因此, 我们有一个拥有多个帐户的组织,
-
-假设我们有包含此策略的S3存储桶｡
-
-它说只有当API调用是从一个拥有PrincipalOrgID的帐户发出的时候,
-
-你才可以执行PutObject或GetObject｡
-
-因此, 它将只允许您组织中的成员帐户访问S3存储桶,
-
-但由于此S3存储桶策略, 组织外的任何用户都将被拒绝｡
-
-好的, 现在您已经在IAM策略中看到了许多不同的情况,
-
-但希望这是有意义的, 它可以真正开始深入研究您的使用情形, 并在安全性方面制定真正高级的使用情形｡
-
-原来如此｡ 
-
-我希望你们喜欢, 下节课再见｡
+- （统一汇总，稍后添加）

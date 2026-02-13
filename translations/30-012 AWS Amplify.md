@@ -1,79 +1,17 @@
----
-source: 30 - Other Services\012 AWS Amplify_zh.srt
----
+## 学习目标
 
-讲师：现在让我们来谈谈AWS
+- 了解 AWS Amplify 的功能集合及其在前端/全栈应用加速开发中的作用。
 
-Amplify, 它是一项复杂的服务,
+## 重点速览
 
-但我希望您将其核心视为Web和移动应用程序开发工具｡
+- Amplify 提供托管的前端托管、认证、GraphQL/REST API 生成、以及与 Cognito、AppSync、S3 等服务的无缝集成。
 
-因此, 这个Amplify基本上可以让您将大量AWS堆栈集成到一个地方,
+## 详细内容
 
-以构建您的Web和移动应用程序｡
+1. 功能：快速部署静态/单页应用、内置 CI/CD、后端资源通过 Amplify CLI 或控制台生成（Auth、API、Storage 等）。
+2. 设计注意：生产环境安全（Cognito 用户池配置、OAuth 设置）、构建与回滚策略、静态资源缓存与 CDN 配置。
 
-所以你是一个开发人员, 你知道你想做很多事情｡
+## 自测问题
 
-你想先创建后端｡ 
-
-因此, 您将使用Amplify CLI来创建Amplify
-
-Backend｡
-
-这个后端将在内部使用我们所知道的AWS的大量资源｡
-
-Amazon S3用于数据存储,
-
-Amazon Cognito用于身份识别,
-
-AppSync用于API,
-
-API网关用于API, StageMaker用于机器学习,
-
-Lex用于文本检测, Lambda用于函数数据服务, DynamoDB用于数据等等｡
-
-因此, 我们的想法是, 由于Amplify,
-
-我们有一个地方可以配置身份验证, 存储, API将是REST
-
-API或GraphQL API, CI/CD,
-
-PubSub, Analytics, AI/ML预测,
-
-监控等｡
-
-然后连接代码｡ 
-
-它可以来自GitHub, AWS上的CodeCommit或Bitbucket,
-
-GitLab的任何地方, 或者您可以直接上传代码｡
-
-因此, 您可以直接从Amplify内部集成所有这些后端服务｡
-
-然后添加Amplify Frontend Libraries以连接到Amplify
-
-Backend｡
-
-所以你有Web应用程序的前端库, 移动应用程序,
-
-以及许多许多框架｡
-
-最后, 当您准备就绪时,
-
-您将使用Amplify Console部署Amplify本身和Amazon
-
-CloudFront, 以便您的Web或移动应用程序可用｡
-
-现在, 它们看起来可能很多, 但我希望你把Amplify视为Web和移动应用程序的Elastic
-
-Beanstalk｡
-
-这只是一个高级概述, 但您需要看到它允许您将AWS的所有这些东西集成到一个地方,
-
-为开发人员创建Web和移动应用程序提供一站式服务｡
-
-好了, 这就是这个概述,
-
-希望你们喜欢,
-
-我们下节课再见.
+1. Amplify 如何简化前端与后端的集成工作流？
+2. 在使用 Amplify 托管生产站点时应注意哪些安全与性能设置？

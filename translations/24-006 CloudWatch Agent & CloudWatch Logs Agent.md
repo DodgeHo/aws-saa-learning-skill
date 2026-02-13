@@ -1,123 +1,32 @@
 ---
-source: 24 - AWS Monitoring & Audit CloudWatch, CloudTrail & Config\006 CloudWatch Agent & CloudWatch Logs Agent_zh.srt
+source: 24 - Monitoring & Logging\006 CloudWatch Agent & CloudWatch Logs Agent_zh.srt
 ---
 
-解说员：现在我们来讨论一下如何使用CloudWatch代理从EC2实例获取日志以及指标,
+## 学习目标
 
-并将其放到CloudWatch上｡
+- 理解 CloudWatch Agent 与 CloudWatch Logs Agent 的差异与各自适用场景。 
+- 掌握基本配置要点（metrics collection、logs section、IAM 权限与系统依赖）。 
 
-因此, 默认情况下, CloudWatch不会从您的EC2实例发送日志｡
+## 重点速览
 
-为此, 您需要创建并启动一个代理, 它是EC2实例上的一个小程序,
+- CloudWatch Agent 支持系统级指标（CPU、内存、磁盘、日志）与自定义指标；旧版 CloudWatch Logs Agent 专注日志发送。 
+- 推荐使用 CloudWatch Agent（统一收集指标与日志），通过 JSON 配置集中管理。 
 
-将推送您想要的日志文件｡
+## 详细内容
 
-因此, 我们的想法是, 您的简单EC2实例将具有CloudWatch日志代理,
+- 功能比较：
+  - CloudWatch Agent（统一）：可收集系统指标、应用日志并发送到 CloudWatch Metrics/Logs，支持多平台。 
+  - CloudWatch Logs Agent（旧版）：仅推送日志，现逐步被 CloudWatch Agent 取代。 
 
-例如, 运行将日志发送到CloudWatch日志中,
+- 配置要点：
+  - 使用 `amazon-cloudwatch-agent-config-wizard` 或手动编写 JSON 配置，定义要收集的日志文件路径、metric dimension 与采样频率。 
+  - 需要实例 IAM role（或 IAM user）具备 `CloudWatchAgentServerPolicy` 与 `CloudWatchLogsFullAccess` 等最低权限。 
 
-以使其工作｡
+## 自测问题
 
-您的EC2实例必须有一个IAM角色,
+- 如果需要同时收集系统指标与应用日志，应选择哪个 Agent？为什么？
+- 列出配置 CloudWatch Agent 收集自定义日志的关键字段。 
 
-允许它将日志发送到CloudWatch
+## 术语与易错点（将在全部章节完成后汇总）
 
-Logs, 这有意义吗？
-
-值得注意的是, CloudWatch日志代理也可以设置为内部部署服务器｡
-
-因此, 您可以将服务､ 虚拟服务器（如内部部署的VM-ware）安装在同一个代理上,
-
-这是一个小型Linux程序, 您的日志也将最终保存在CloudWatch日志中｡
-
-现在, 您可以在CloudWatch中找到两种不同的代理｡
-
-您有较旧的CloudWatch日志代理和较新的CloudWatch统一代理｡
-
-因此, 它们都适用于虚拟服务器､
-
-内部部署服务器上的EC2实例等｡
-
-CloudWatch日志代理是旧版本, 只能将日志发送到CloudWatch日志｡
-
-而统一代理将收集其他系统级指标,
-
-包括RAM､ 进程｡
-
-我将在下一张幻灯片中向您展示这一点,
-
-并将日志发送到CloudWatch日志中｡
-
-现在它是统一的｡ 
-
-它更好, 因为它可以执行指标和日志｡ 
-
-因此, 我们将其命名为统一代理｡ 
-
-但是, 您还可以使用SSM参数存储轻松配置代理,
-
-这是以前的代理所不具备的功能｡
-
-因此, 您可以对所有Unified
-
-Agent进行集中配置｡
-
-因此, CloudWatch统一代理可以将日志发送到CloudWatch日志｡
-
-但让我们看一下指标｡ 
-
-所以如果你在你的Institute实例或Linux服务器上安装了它,
-
-你就可以收集指标, 它们是什么？
-
-我们可以收集CPU指标, 但要在更精细的级别收集,
-
-例如：活动､ 来宾､ 空闲､ 系统､
-
-用户､ 盗用｡
-
-你根本不需要了解他们｡ 
-
-我只是给你所有这些指标的粒度｡ 
-
-免费使用总数的光盘指标｡ 
-
-磁盘IO, 以写入､ 读取､ 字节､ IOPS的数量表示｡ 
-
-空闲RAM､ 非活动RAM､ 已用RAM､ 总RAM､ 缓存RAM｡ 
-
-Netstats包含TCP和UDP连接数､
-
-网络数据包数､ 字节数, 以获取有关进程的一些信息｡
-
-所以在进程的总数中, 我指的是你的死亡､
-
-阻塞､ 闲置､ 运行､ 睡眠｡
-
-以及交换空间, 这是磁盘上的内存溢出｡ 
-
-那么免费使用和使用百分比是多少呢？
-
-所以你为什么不记得只是拍一张这些东西的心理截图｡
-
-底线是CloudWatch统一代理允许这样做｡ 
-
-与EC2实例的常规监视相比, 您可以获得更多的度量,
-
-以及更多的粒度细节｡
-
-作为EC2开箱即用的提醒, 您可以获得一些关于磁盘､
-
-CPU和网络的信息, 而不是内存和交换, 但所有这些都是高级别的,
-
-好吗？
-
-如果您希望获得更高的粒度, 请考虑CloudWatch统一代理,
-
-好吗？
-
-所以我就这样了｡ 
-
-希望你喜欢｡ 
-
-我们下节课再见｡
+- （统一汇总，稍后添加）

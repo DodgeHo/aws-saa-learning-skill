@@ -18,33 +18,35 @@ source: 07 - EC2 Instance Storage\012 Amazon EFS - Hands On_zh.srt
 
 首先, 一个可选的名字,
 
-我留下这个空的｡
+# EFS 实操
 
-然后我们必须围绕可用性和耐用性进行选择｡ 
+## 学习目标
+- 创建 EFS 文件系统
+- 在 EC2 上挂载 EFS
+- 验证多实例共享
 
-因此, 如果您希望跨多个AZ复制数据, 我们有一个区域NFS
+## 重点速览
+- EFS 创建后生成文件系统 ID
+- EC2 需安装 `amazon-efs-utils`
+- 多实例挂载可共享文件
 
-EFS文件系统, 这是默认选项, 并且这绝对是生产环境中需要的设置｡
+## 详细内容
+创建 EFS：
+1. 控制台进入 **EFS**，点击 **Create file system**。
+2. 选择 VPC，保持默认设置并创建。
 
-但是, 如果您只是测试EFS,
+挂载到实例：
+1. 安装工具：`sudo yum install -y amazon-efs-utils`
+2. 创建挂载点：`sudo mkdir -p /mnt/efs`
+3. 挂载：`sudo mount -t efs fs-xxxx:/ /mnt/efs`
 
-并且希望降低成本,
+验证共享：
+- 在 `/mnt/efs` 创建文件
+- 第二台实例挂载同一 EFS 后应能看到
 
-则可以选择使用One Zone类型的EFS文件系统,
-
-其中数据仅在单个AZ中冗余存储｡
-
-因此, 如果AZ关闭,
-
-则EFS文件系统也关闭,
-
-然后您选择AZ｡
-
-但为了简单起见, 我们将保持它作为区域｡ 
-
-接下来, 我们有自动备份,
-
-所以我们想要备份EFS文件系统,
+## 自测问题
+- EFS 与 EBS 的最大差异是什么？
+- 挂载 EFS 之前必须安装什么工具？
 
 您可以启用或禁用它, 但现在让我们保持启用状态｡
 

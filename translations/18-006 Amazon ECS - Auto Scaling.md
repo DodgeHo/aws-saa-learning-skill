@@ -1,3 +1,21 @@
+**学习目标**
+- 了解 ECS 服务自动缩放的触发指标与策略
+- 区分在 EC2 启动类型下扩展任务与扩展底层 EC2 实例的方法
+
+**重点速览**
+- 可基于 CPU 利用率、内存利用率或 ALB 每目标请求数触发自动缩放
+- 支持目标跟踪（target tracking）、步进缩放（step scaling）与计划缩放（scheduled scaling）
+- 对于 EC2 启动类型，优先使用 ECS 容量提供者配合 ASG 以实现智能扩容
+
+**详细内容**
+ECS 服务可通过 AWS Application Auto Scaling 自动增加或减少任务数量。常用指标有服务的 CPU 利用率、内存利用率，以及来自 ALB 的每目标请求计数。基于这些指标，可配置目标跟踪策略（例如维持 CPU 在 60%）、步进缩放或定时扩缩。
+
+在 EC2 启动类型中，扩展 ECS 服务的任务数并不等同于扩展 EC2 实例池；若底层实例不足，需要扩展 ASG。推荐使用 ECS 容量提供者（Capacity Provider），它会在任务需要更多容量时自动扩展关联的 ASG，从而实现端到端的弹性。
+
+**自测问题**
+- ECS 服务可使用哪三类主要指标触发自动缩放？
+- 目标跟踪与步进缩放有什么区别？
+- 为什么建议在 EC2 启动类型下使用容量提供者？
 ---
 source: 18 - Containers on AWS ECS, Fargate, ECR & EKS\006 Amazon ECS - Auto Scaling_zh.srt
 ---

@@ -1,53 +1,29 @@
----
-source: 17 - Decoupling applications SQS, SNS, Kinesis, Active MQ\011 Amazon Kinesis - Overview_zh.srt
----
+```markdown
+**学习目标**
 
-教师：欢迎来到这一节的室壁运动｡ 
+- 了解 Amazon Kinesis 的定位与组成（Data Streams、Data Firehose、Data Analytics、Video Streams）。
+- 能区分各子服务的主要用途与典型场景（实时采集、批量传输、实时分析、视频流处理）。
 
-因此, 您需要深入了解认证开发人员考试中的Kinesis,
+**重点速览**
 
-因此我将花大量时间介绍每项服务的工作原理,
+- Kinesis 是用于实时收集、处理与分析流数据的家族服务：
+  - Data Streams：可编程的流，用于按需消费与重放。
+  - Data Firehose：托管的传输，负责把流数据送到 S3/Redshift/OpenSearch 等目标（近实时、无重放）。
+  - Data Analytics：使用 SQL 或 Flink 对流数据做实时分析。
+  - Video Streams：专用于视频流采集与处理。
 
-以便为您提供深入的专业知识,
+**详细内容**
 
-帮助您在考试中获得最高分｡
+- 选择建议：
+  - 需要自定义处理与重放能力、且可管理分片容量 → 选 Data Streams。
+  - 需要无运维的近实时传输并写入目标存储/第三方 → 选 Data Firehose。
+  - 需要在流上执行实时 SQL/Flink 分析 → 选 Data Analytics。
+  - 视频流捕获/处理则使用 Video Streams。
+- Kinesis 适用于点击流、日志、遥测、实时监控与大数据摄取等场景，设计时关注分片、吞吐与保留策略（Data Streams 可保留 1–365 天）。
 
-让我们先来了解一下Kinesis｡ 
+**自测问题**
 
-Kinesis使实时收集､ 处理和分析流数据变得非常容易｡
+1. Data Streams 与 Data Firehose 在“重放能力”上有什么不同？
+2. 哪个 Kinesis 子服务更适合将流数据直接送入 Redshift？为什么？
 
-因此, 实时数据可以是任何数据,
-
-例如应用程序日志､ 指标､ 网站点击流､
-
-物联网遥测数据｡
-
-只要数据是快速且实时生成的,
-
-这就算作实时数据流｡
-
-因此, Kinesis包含四项服务｡ 
-
-我们将深入探讨Kinesis数据流,
-
-以捕获､ 处理和存储数据流｡
-
-有Kinesis Data Firehose可以将数据流加载到AWS中的一些数据存储中,
-
-但也可以加载到AWS之外｡
-
-有Kinesis数据分析, 以分析数据流与SQL语言或Apache
-
-Flink｡
-
-最后, 一个没有出现在考试中, 但仍然值得一提的服务是Kinesis视频流捕获,
-
-处理和存储视频流｡
-
-这只是一个非常高层次的概述｡ 
-
-在接下来的课程中,
-
-我们将逐一探讨这些服务, 并确保我们对它们有足够的了解｡
-
-所以我们下节课再见｡
+```

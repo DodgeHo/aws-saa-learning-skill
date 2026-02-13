@@ -1,3 +1,21 @@
+**学习目标**
+- 掌握在 ECS 控制台创建集群（包括 Fargate 与 EC2 混合）的关键步骤
+- 理解自动伸缩组（ASG）、容量提供者与容器实例的关系
+
+**重点速览**
+- 创建集群时可选择 Fargate、EC2 或混合模式；EC2 模式需指定 AMI、实例类型与 ASG 配置
+- 容量提供者将 ASG 与 ECS 集群连接，自动按需扩容实例
+- 创建完成后，可在集群基础设施中看到容量提供者、ASG 与容器实例注册信息
+
+**详细内容**
+在控制台创建 DemoCluster：选择启动类型（Fargate 保持启用，同时为演示也启用 EC2），为 EC2 指定操作系统（如 Amazon Linux 2 / 2023）、实例类型（可选免费层的 t2.micro）、以及 ASG 的最小/期望/最大容量。网络选择默认 VPC、子网与安全组，是否分配公网 IP 也可配置。
+
+集群创建后，ECS 会为 EC2 生成自动伸缩组（ASG），并通过 ECS 代理将启动的实例注册为容器实例。集群中会显示容量提供者（FARGATE、FARGATE_SPOT、ASGProvider），其中 ASGProvider 与自动伸缩组配对，可根据任务需求自动扩展 EC2 实例。
+
+**自测问题**
+- 创建 EC2 类型的 ECS 集群时需要配置哪些关键选项？
+- 容量提供者在 ECS 集群中扮演什么角色？
+- 如何在集群中查看已注册的容器实例？
 ---
 source: 18 - Containers on AWS ECS, Fargate, ECR & EKS\004 Creating ECS Cluster - Hands On_zh.srt
 ---

@@ -1,71 +1,27 @@
 ---
-source: 26 - AWS Security & Encryption KMS, SSM Parameter Store, Shield, WAF\015 Shield - DDoS Protection_zh.srt
+source: 26 - Security & Compliance\015 Shield - DDoS Protection_zh.srt
 ---
 
-教师：现在我们来谈谈AWS防护罩｡ 
+## 学习目标
 
-而Shield是一项保护您免受DDoS攻击的服务｡
+- 理解 AWS Shield（Standard 与 Advanced）的差异及用于缓解 DDoS 的基本能力。 
 
-什么是DDoS？
+## 重点速览
 
-这是分布式拒绝服务｡ 
+- Shield Standard 自动保护 AWS 公有服务（如 CloudFront、ALB、Route53）免受常见 DDoS；Shield Advanced 提供增强检测、24/7 DDoS 响应团队与费用保护。 
 
-这个想法是, 您的基础架构会突然同时收到来自世界各地许多计算机的许多请求｡
+## 详细内容
 
-因此, 它的目标是让您的基础架构不堪重负｡
+- 功能对比与实践：
+  - Shield Standard：无需额外配置即可获得基础 DDoS 防护。 
+  - Shield Advanced：适用于关键业务流量，提供更细粒度的检测、可自定义的 DDoS 响应计划与费用保护。 
+  - 与 WAF、CloudFront、Route53 配合使用可形成多层防护策略。 
 
-这样, 您的基础架构就无法为您的真实用户提供服务,
+## 自测问题
 
-这就是所谓的分布式拒绝服务｡
+- Shield Standard 与 Advanced 的主要区别是什么？在何种场景下考虑升级到 Advanced？
+- 描述将 Shield 与 WAF、CloudFront 结合使用的优势。 
 
-所以我们可以防御它, 所以我们有AWS
+## 术语与易错点（将在全部章节完成后汇总）
 
-Shield Standard服务｡
-
-这是一项免费服务,
-
-它已经为AWS的每个客户激活, 并将为您提供保护, 使您免受SYN或UDP洪水攻击或任何反射攻击或其他第3层或第4层攻击｡
-
-如果您想获得高级保护,
-
-您可以使用AWS Shield高级服务｡
-
-因此, 这是一项可选的DDoS缓解服务｡ 
-
-每个组织每月的费用约为3,000美元｡ 
-
-我们的想法是, 您将在Amazon
-
-EC2､ 弹性负载平衡､ Amazon CloudFront､
-
-全球加速器和Route 53上获得针对更复杂DDoS攻击的保护｡
-
-此外, 您还可以全天候访问AWS
-
-DDoS响应团队｡
-
-所以万一你受到攻击,
-
-你会有人来帮助你,
-
-让你一路走下去｡
-
-如果你是招致更高的费用,
-
-因为你也被攻击, 这个盾牌先进保护你从这些更高的费用｡
-
-此Shield Advance具有自动应用层DDoS缓解功能,
-
-这意味着它将自动创建､ 评估和部署WAF规则,
-
-以缓解第7层攻击｡
-
-因此, 您的Web应用程序防火墙将自动制定规则,
-
-帮助您减轻这些攻击, DDoS攻击（如果它们发生在第7层）,
-
-这非常好｡
-
-我们就说这节课吧, 我希望你们喜欢,
-
-下节课再见｡
+- （统一汇总，稍后添加）

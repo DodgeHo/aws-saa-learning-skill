@@ -1,57 +1,30 @@
 ---
-source: 24 - AWS Monitoring & Audit CloudWatch, CloudTrail & Config\013 CloudTrail Hands On_zh.srt
+source: 24 - Monitoring & Logging\013 CloudTrail Hands On_zh.srt
 ---
 
-老师：那么让我们来看看CloudTrail｡ 
+## 学习目标
 
-CloudTrail是一项拦截您帐户内任何API调用或用户活动的服务｡
+- 实操配置 CloudTrail、将日志交付至 S3 与 CloudWatch Logs，并演练基于事件的自动响应（EventBridge + Lambda）。 
 
-在左侧面板上, 我们可以查看事件历史,
+## 重点速览
 
-这是过去90天的管理事件历史｡
+- Hands-on 包括：创建 Trail、启用数据事件（S3）、配置 CloudWatch Logs 导出、并使用 EventBridge 触发 Lambda。 
 
-因此, 您可以在此帐户中查看一段时间内进行的所有API调用｡
+## 详细内容
 
-所以不一定要很有趣, 好吧, 但他们都会在这里｡
+- 实操步骤（高层）：
+  - 在 CloudTrail 控制台创建 Trail，选择将日志写入指定的 S3 存储桶，并启用跨区域复制（若需要）。 
+  - 启用数据事件以记录 S3 对象级操作（GetObject、PutObject），并将 CloudTrail 事件流到 CloudWatch Logs 以便实时查询。 
+  - 使用 EventBridge 规则捕获特定 API 调用并触发 Lambda 执行响应动作（如标签、通知或权限收紧脚本）。 
 
-例如, 我想在EC2控制台中查看,
+- 注意事项：
+  - S3 存储桶权限、日志加密与生命周期（归档）设置，以及对 CloudTrail 日志访问的最小权限控制应优先配置。 
 
-并创建了一个演示实例｡
+## 自测问题
 
-我要做的就是终止这个实例｡
+- 在 Hands-on 中，如何配置一个规则以在检测到未授权的 `CreateBucket` 操作时触发通知？
+- 为什么启用数据事件会显著增加日志量？应如何管理成本？
 
-所以我右键单击, 终止,
+## 术语与易错点（将在全部章节完成后汇总）
 
-现在实例被终止了｡
-
-我要做的是检查这个事件是否发生并出现在CloudTrail中｡
-
-所以我等五分钟再打给你｡ 
-
-所以我刷新了我的页面, 正如你所看到的,
-
-我运行了终止实例, API调用｡
-
-我们可以看到事件源是什么｡ 
-
-所以它是EC2从哪里完成的,
-
-使用的访问密钥,
-
-使用的区域, 等等｡
-
-我们可以在这里看到整个事件｡ 
-
-这就是CloudTrail的全部功能, 我们可以直接在这个UI中看到CloudTrail中真正发生的所有事件｡
-
-这是一个简短的介绍, 在实践者的水平,
-
-但这是足够的, 你开始和回答问题,
-
-在考试中｡
-
-就这样了
-
-希望你喜欢｡ 
-
-我们下节课再见｡
+- （统一汇总，稍后添加）

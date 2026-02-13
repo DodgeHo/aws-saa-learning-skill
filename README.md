@@ -14,7 +14,7 @@
 - 讲师: Stéphane Maarek
 - 官方认证页面: https://aws.amazon.com/certification/certified-solutions-architect-associate/
 
-> 说明: 本仓库不包含课程视频或字幕文件, 仅提供学习框架与结构化模板。课程素材需由学习者自行准备并放置在本地路径中。
+> 说明: 本仓库不包含课程视频或字幕文件, 仅提供学习框架与结构化模板。课程素材需由学习者自行准备并放置在translations路径中。
 
 ## 学习框架来源
 
@@ -25,7 +25,7 @@
 
 ## 核心特点
 
-- **本地素材**: 读取 D:\BaiduNetdiskDownload\AWS 中的 _zh.srt 字幕文件
+- **课程素材**: 来自课程中的字幕文件
 - **自动整理**: 转换字幕为可读的 Markdown 并放入 translations/
 - **结构化学习**: 按章节生成学习清单与进度模板
 - **中文优先**: 材料来自中文字幕, 术语保留英文

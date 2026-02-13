@@ -1,65 +1,29 @@
 ---
-source: 24 - AWS Monitoring & Audit CloudWatch, CloudTrail & Config\014 CloudTrail - EventBridge Integration_zh.srt
+source: 24 - Monitoring & Logging\014 CloudTrail - EventBridge Integration_zh.srt
 ---
 
-讲师：您需要了解的一个非常重要的文化集成是使用Amazon
+## 学习目标
 
-EventBridge拦截任何API调用｡
+- 理解如何将 CloudTrail 事件通过 EventBridge 实现实时检测与自动化响应的模式。 
 
-假设您希望在用户使用DeleteTable
+## 重点速览
 
-API调用删除DynamoDB中的表时收到SNS通知｡
+- 将 CloudTrail 事件路由到 EventBridge，可基于事件模式触发 Lambda、Step Functions 或自动化工作流，实现快速响应与补救。 
 
-因此, 每当我们在AWS中进行API调用时, 如您所知,
+## 详细内容
 
-API调用本身将记录在CloudTrail中｡
+- 集成流程：
+  - 配置 CloudTrail 将管理事件发送到 CloudWatch Logs 或直接利用 EventBridge 的事件流（默认事件总线）。 
+  - 在 EventBridge 中定义规则匹配特定 API 调用或事件源（例如未授权访问），并将目标设置为 Lambda 或 SQS 以执行自动化响应。 
 
-这适用于任何API调用｡ 
+- 实践建议：
+  - 对高频事件设置率限制或聚合策略，避免触发泛滥的自动化；使用 Dead Letter 与重试策略保证可靠性。 
 
-但是, 所有这些API调用最终也将在Amazon EventBridge中作为事件结束｡
+## 自测问题
 
-因此, 我们可以查找非常具体的删除表API调用,
+- 描述一个使用 CloudTrail + EventBridge 自动中断未经授权 API 调用的高层流程。 
+- 为什么需要为 EventBridge 规则添加输入转换（Input Transformer）？
 
-并创建一个规则｡
+## 术语与易错点（将在全部章节完成后汇总）
 
-这个规则将有一个目标,
-
-目标是Amazon SNS, 因此,
-
-我们可以创建警报｡
-
-- ：那么让我再举几个例子来说明如何集成Amazon
-
-Eventbridge和CloudTrail｡
-
-例如, 您希望在用户在您的帐户中担任某个角色时得到通知｡
-
-因此, AssumeRole是IAM服务中的一个API,
-
-因此将由CloudTrail记录｡
-
-然后使用EventBridge集成,
-
-我们可以将消息触发为SNS主题｡
-
-类似地, 我们还可以拦截API调用,
-
-例如, 更改安全组入站规则｡
-
-因此, Security Group调用称为AuthorizeSecurityGroupIngress,
-
-它是一个EC2 API调用｡
-
-因此, CloudTrail将再次记录这些信息,
-
-然后它们将出现在EventBridge中,
-
-然后我们可以在SNS中触发通知｡
-
-因此, 正如您所看到的, 可能性是无限的,
-
-但是现在您对如何利用集成有了一些想法｡
-
-希望你们喜欢,
-
-我们下次课再见｡
+- （统一汇总，稍后添加）

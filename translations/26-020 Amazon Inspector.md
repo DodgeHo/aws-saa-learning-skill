@@ -1,73 +1,26 @@
 ---
-source: 26 - AWS Security & Encryption KMS, SSM Parameter Store, Shield, WAF\020 Amazon Inspector_zh.srt
+source: 26 - Security & Compliance\020 Amazon Inspector_zh.srt
 ---
 
-教师：现在我们来谈谈亚马逊检查员｡ 
+## 学习目标
 
-因此, Amazon Inspector是一项服务,
+- 了解 Amazon Inspector 的用途：自动化主机与容器的安全评估与漏洞扫描。 
 
-它允许您对一些事情运行自动化安全评估｡
+## 重点速览
 
-首先, 在E2实例上｡ 
+- Inspector 扫描操作系统与应用层漏洞、配置弱点与运行时行为异常，并生成发现以支撑修复优先级。 
 
-您将在EC2实例上利用Systems Manager代理,
+## 详细内容
 
-Amazon Inspector将开始评估该E2实例的安全性｡
+- 使用场景与流程：
+  - 配置评估目标（EC2 实例、ECR 容器映像），运行评估模板并查看发现（包含严重性评级与修复建议）。 
+  - 与 Systems Manager、EventBridge 集成可自动化补丁与修复流程，结合 Inspector 结果优化安全基线。 
 
-它将针对意外的网络访问进行分析,
+## 自测问题
 
-并分析运行中的操作系统是否存在已知漏洞｡
+- 描述 Inspector 在漏洞评估中的主要输出与如何优先处理。 
+- 如何将 Inspector 的发现用于自动化修补流程？
 
-这是连续进行的｡ 
+## 术语与易错点（将在全部章节完成后汇总）
 
-然后, 我们也有亚马逊检查器为您的容器图像推到亚马逊ECR｡
-
-例如, 您的Docker图像｡ 
-
-因此, 当您的容器映像被推送到Amazon
-
-ECR时, Amazon Inspector将针对已知漏洞对它们进行分析｡
-
-我们还有Amazon Inspector用于Lambda函数｡ 
-
-因此, Lambda函数在部署时,
-
-将由Inspector再次分析函数代码和包依赖项中的软件漏洞｡
-
-此评估在部署功能时进行｡
-
-因此, 一旦Amazon Inspector完成其工作,
-
-它就可以将其发现报告到AWS
-
-Security Hub, 并将这些发现和事件发送到Amazon EventBridge｡
-
-这为您提供了一种集中查看基础架构上运行的漏洞的方法,
-
-并且通过EventBridge, 您可以运行某种自动化｡
-
-那么亚马逊检查员会评估什么呢？
-
-您必须记住, Inspector仅适用于您正在运行的EC2实例､
-
-Amazon ECR上的容器映像和Lambda函数｡
-
-而且它只会在需要时对基础架构进行持续扫描｡
-
-它将查看漏洞数据库CVE,
-
-以查找EC2､ ECR和Lambda的软件包漏洞｡
-
-它将检查Amazon
-
-EC2上的网络可达性, 如果CVE的数据库更新,
-
-则Amazon Inspector将自动再次运行, 以确保再次测试所有基础架构｡
-
-每次运行时, 都会将一个风险分值与所有漏洞相关联,
-
-以确定优先级｡
-
-这就是亚马逊检查员｡ 
-
-我希望你们喜欢, 我们下节课再见｡
+- （统一汇总，稍后添加）

@@ -1,57 +1,17 @@
----
-source: 28 - Disaster Recovery & Migrations\010 VMware Cloud on AWS_zh.srt
----
+## 学习目标
 
-讲师：现在, 我们来谈谈VMware Cloud on AWS｡ 
+- 了解 VMware Cloud on AWS 的用途、常见迁移路径与与 AWS 原生服务的集成考虑。
 
-这里有一些背景｡ 
+## 重点速览
 
-如果您有内部部署数据中心, 有时您会使用VMware
+- VMware Cloud on AWS 可将现有 VMware 工作负载无缝延伸到 AWS，便于迁移、灾备与混合云场景；需要评估网络、存储与许可。
 
-Cloud来管理您自己的内部部署数据中心｡
+## 详细内容
 
-因此, 您的vSphere环境和虚拟机都是从VMware云端进行管理｡
+1. 优点：保持现有 VMware 工具链与操作习惯、快速迁移虚拟机、与 AWS 服务互联以增强能力。
+2. 注意事项：网络互联（Direct Connect）、许可模型、监控与权限治理、数据迁移路径与性能验证。
 
-而拥有自己的VMware数据中心的消费者,
+## 自测问题
 
-他们希望扩展其数据中心容量,
-
-以便同时利用云计算, 尤其是AWS｡
-
-但他们希望继续使用VMware Cloud软件管理一切,
-
-包括他们自己的数据中心和云｡
-
-这就是VMware Cloud on AWS背后的理念｡ 
-
-有了它, 您可以将整个VMware云计算基础架构扩展到AWS上,
-
-并运行vSphere､ vSAN､ NSX等, 这些都是VMware的子服务, 您不必了解｡
-
-那么, 一旦你有了这个, 有什么使用情形？
-
-首先, 现在您可以将计算能力从数据中心扩展到云,
-
-或将存储从数据中心扩展到云, 因此您可以开始将基于VMware的工作负载迁移到AWS｡
-
-您还可以跨多个数据中心运行生产工作负载,
-
-并且可以选择私有云､ 公共云或混合云环境｡
-
-最后, 它还为您提供了灾难恢复策略,
-
-因为现在您可以使用您熟悉的同一套软件快速迁移到云｡
-
-由于现在您已在AWS云上, 因此您实际上可以访问不同的AWS服务,
-
-并开始利用它们, 例如Amazon EC2､ Amazon
-
-FSx､ S3､ RDS､ Direct
-
-Connect､ Redshift等｡
-
-原来如此｡ 
-
-这只是您需要了解的高级概述｡ 
-
-我希望你们喜欢, 下节课再见｡
+1. 描述将本地 VMware 环境扩展到 VMware Cloud on AWS 的关键步骤。
+2. 为什么在混合环境中仍然需要考虑 Direct Connect？

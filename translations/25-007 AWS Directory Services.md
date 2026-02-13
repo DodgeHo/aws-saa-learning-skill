@@ -1,225 +1,31 @@
 ---
-source: 25 - Identity and Access Management (IAM) - Advanced\007 AWS Directory Services_zh.srt
+source: 25 - Identity & Access\007 AWS Directory Services_zh.srt
 ---
 
-讲师：嘿, 现在我们来谈谈Microsoft
+## 学习目标
 
-Active Directory和AWS目录服务｡
+- 了解 AWS Directory Services（包括 AWS Managed Microsoft AD、Simple AD、AD Connector）的差异与典型使用场景。 
+- 掌握如何选择目录服务以支持 Windows 域加入、LDAP 验证或与现有本地 Active Directory 集成。 
 
-如果您不知道Microsoft AD是什么,
+## 重点速览
 
-请告诉我们, 它是一款可在任何具有AD域服务的Windows服务器上找到的软件｡
+- AWS Managed Microsoft AD 提供托管的 Microsoft Active Directory，适用于需要域控制器功能的应用；AD Connector 用于代理到现有本地 AD。 
+- Simple AD 为轻量级的 LDAP 目录，适合基础的认证场景但功能受限。 
 
-它是一个对象数据库, 对象可以是用户帐户､
+## 详细内容
 
-计算机､ 打印机､ 文件共享､ 安全组｡
+- 选择与集成：
+  - 若需完整域服务（Group Policy、Kerberos、域用户），选择 AWS Managed Microsoft AD；若只是转发认证请求到本地 AD，选择 AD Connector。 
+  - 注意网络连通（VPN/Direct Connect）、时钟同步与信任关系配置，确保域集成稳定。 
 
-因此, 您在内部部署的整个Microsoft生态系统中管理的所有用户都将由Microsoft
+- 运维与安全：
+  - 管理员应关注目录备份、恢复策略、基于角色的访问与最小权限原则；配置日志与监控（CloudWatch/CloudTrail）。 
 
-Active Directory进行管理｡
+## 自测问题
 
-而且将有一个集中的安全管理｡ 
+- 在需要将 EC2 加入域并使用域用户登录的场景，应该选择哪种目录服务？为什么？
+- AD Connector 与 AWS Managed Microsoft AD 的关键区别是什么？
 
-您可以创建帐户､ 分配权限等｡ 
+## 术语与易错点（将在全部章节完成后汇总）
 
-并且所有的对象将被组织成一个树｡ 
-
-而一群树就叫做森林｡ 
-
-这只是一些术语｡ 
-
-让我们举一个例子, 我们有一个域控制器,
-
-我们要在它上面创建一个帐户｡
-
-我们正在创建一个帐户, 用户名为John,
-
-密码为Password｡
-
-我们的想法是,
-
-我们网络中的所有其他Windows计算机都将连接到域控制器｡
-
-如果我们在第一台机器上使用John密码,
-
-它会在控制器中查找该密码,
-
-然后说, 是的, 我们有该登录名｡
-
-然后, 允许您从该计算机登录｡ 
-
-因此, 所有这些计算机都将连接到您的域控制器,
-
-这样您就可以在任何一台计算机上访问用户｡
-
-这就是Active Directory背后的整体理念｡
-
-现在我们有了AWS目录服务, 它为您提供了一种在AWS上创建Active
-
-Directory的方法｡
-
-我们有三种口味｡ 
-
-我们不需要对它们做深入的研究,
-
-但你必须了解这三种口味之间的区别｡
-
-第一个是AWS管理Microsoft AD, 用于在AWS中创建自己的Active
-
-Directory｡
-
-您可以在本地管理用户,
-
-并且它支持多因素身份验证｡
-
-其理念是, 通过此独立Active Directory,
-
-您还可以创建与内部部署AD的信任连接,
-
-您也可以在内部部署AD中拥有自己的用户｡
-
-这意味着, 例如, 您在这里的AD可以与内部部署AD一起信任｡
-
-因此, AWS信任内部部署AD,
-
-内部部署AD也信任AWS｡
-
-因此, 这意味着如果您的用户通过了正确的身份验证,
-
-并且使用了不受AWS管理的帐户, AWS可以在内部部署的Active
-
-Directory中查找帐户｡
-
-同样, 如果内部部署目录用户使用AWS帐户访问您的内部部署AD并对其进行认证,
-
-则可以信任该用户访问并查找它｡
-
-在这里, 我们的用户将在我们的内部部署Active
-
-Directory和AWS之间共享, 明白吗？
-
-有点复杂, 我知道如果你是新来的,
-
-但希望它是有意义的｡
-
-AD连接器稍有不同｡ 
-
-这是一个用于重定向到内部部署AD的直接网关代理, 如果您需要多因素身份验证,
-
-并且用户仅在内部部署AD中进行管理, 则它支持MFA｡
-
-这是一个例子｡ 
-
-在此示例中, 我们的AD Connector只是充当代理｡ 
-
-因此, 如果用户尝试使用我们的AD连接器进行身份验证,
-
-它会将请求代理回我们的内部部署AD并进行查找｡
-
-这里的想法是, 在第一个使用Microsoft
-
-Managed Microsoft AD的案例中, 我们让用户使用AWS
-
-Managed AD, 而用户使用内部部署AD｡
-
-而使用Ad Connector, 正如其名称所示,
-
-它可以连接､ 代理查询, 并将连接请求返回到我们的内部部署Active
-
-Directory｡
-
-我们唯一可以管理用户的地方是内部部署的AD｡
-
-最后是简单AD｡ 
-
-它是AWS上的AD兼容托管目录｡ 
-
-它不使用Microsoft目录｡ 
-
-而且它不能与非内部部署的Active Directory连接｡ 
-
-因此, 如果您没有内部部署AD, 但需要为AWS云部署Active
-
-Directory, 那么您可以将Simple
-
-AD作为一个独立的组件｡
-
-这里的想法是, 使用Active Directory,
-
-您可以创建运行Windows的EC2实例｡
-
-这些Windows实例可以加入网络的域控制器,
-
-并共享所有登录名和凭据等｡
-
-因此, 这就是为什么我们希望在AWS中有一个目录, 以便有一个更接近运行Windows的EC2实例的目录｡
-
-希望这是有意义的｡ 
-
-现在, 考试应该会有一些非常高级别的问题,
-
-比如说, 我们希望将用户代理到内部部署,
-
-因此您需要AD Connector;或者我们希望在AWS中的云上管理用户, 并拥有MFA, 因此您需要AWS托管AD;或者我们只需要简单AD, 但我们没有任何内部部署的内容｡
-
-在本例中, 您需要一个简单的AD｡ 
-
-现在, 您知道了如何将IAM身份中心与Active
-
-Directory集成｡
-
-因此, 如果您使用目录服务连接到在AWS上管理的Active
-
-Directory, 则集成是现成的｡
-
-您只需告诉IAM Identity Center集成并连接到AWS托管的Microsoft
-
-AD｡
-
-很简单的｡ 
-
-但是, 如果您不在云中管理Active
-
-Directory用户, 该怎么办？
-
-如果您有一个自我管理的目录（例如,
-
-内部部署的目录）, 该怎么办？
-
-在这种情况下, 您有两种方式连接到自我管理目录｡
-
-第一个是我们应该称之为使用AWS托管Microsoft
-
-AD的双向信任关系｡
-
-因此, 您可以从目录服务创建托管Microsoft
-
-AD, 然后在Active Directory（例如内部部署的Active Directory）和托管AD之间建立双向信任关系｡
-
-然后, 您可以使用IAM身份中心提供的即装即用集成进行单点注册｡
-
-另一个选项是使用AD连接器｡ 
-
-因此, 这里的AD连接器当然具有与IAM
-
-Identity Center集成的角色｡
-
-然后你连接到它,
-
-它会自动代理任何类型的请求到你的自我管理的目录｡
-
-因此, 如果您必须选择其中一种,
-
-则取决于您是否希望也能够在云中的Active Directory上管理云中的用户｡
-
-然后第一个方案可能更好｡ 
-
-但如果您只是想代理API调用,
-
-则第二种解决方案可能是合适的,
-
-尽管延迟稍长｡
-
-这节课就讲到这里｡ 
-
-我希望你们喜欢它, 我们下节课再见｡
+- （统一汇总，稍后添加）

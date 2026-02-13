@@ -1,45 +1,25 @@
----
-source: 15 - CloudFront & AWS Global Accelerator\004 CloudFront - Geo Restriction_zh.srt
----
+## 学习目标
 
-讲师：关于CloudFront
+- 理解 CloudFront 的地理限制（Geo Restriction）功能及常见用途。
+- 会区分 allowlist 与 blocklist，并能在控制台配置受限或允许的国家/地区列表。
 
-Geo Restriction的简短讲座｡
+## 重点速览
 
-因此, 您可以根据他们试图访问发行版的国家/地区来限制谁可以访问您的发行版｡
+- Geo Restriction 根据客户端 IP 的地理位置（借助 Geo-IP 数据库）决定是否允许访问分发内容，可用于版权或合规限制。
+- 支持两种模式：allowlist（仅允许列出的国家/地区）和 blocklist（阻止列出的国家/地区）。
 
-因此, 您可以设置一个allowlist来定义已批准国家/地区的列表,
+## 详细内容
 
-或者您可以设置一个blocklist来设置被禁止国家/地区的列表｡
+1. 工作方式
+- CloudFront 根据请求源 IP 通过 Geo-IP 数据库映射到国家/地区，再与分发的地理限制配置进行匹配以决定是否允许请求。
 
-现在, 通过使用第三方Geo-IP数据库将用户的IP与其所属的国家进行匹配来确定国家｡
+2. 配置要点
+- 在 CloudFront 控制台的 Security -> Geo restriction 下可编辑配置，选择 allowlist 或 blocklist 并列出国家/地区代码。
 
-因此, 使用地理限制的用例将是版权法来控制对内容的访问｡
+3. 使用场景
+- 常见用于内容版权控制（按国家/地区限制访问）、合规性要求或区域性业务策略。
 
-因此, 要打开地理限制, 请转到“安全”下,
+## 自测问题
 
-然后在这里您将找到CloudFront地理限制,
-
-还有国家/地区｡
-
-然后你点击编辑｡ 
-
-所以它有点隐藏, 但在那里你可以有一个allowlist或blocklist｡
-
-例如, 我们可以设置一个allowlist,
-
-并枚举始终允许的国家/地区, 其余的将被CloudFront阻止｡
-
-因此, 我们在这里说, 印度和美国是允许在我们的CloudFront分布｡
-
-如果我们对此满意, 我们保存更改｡ 
-
-正如你所看到的, 现在它的类型是allowlist,
-
-国家列在这里｡
-
-就是这样｡ 
-
-所以我希望你们喜欢,
-
-我们下次课再见｡
+1. Geo Restriction 的两种模式有何区别？适用场景分别是什么？
+2. CloudFront 如何判断请求来自哪个国家/地区？

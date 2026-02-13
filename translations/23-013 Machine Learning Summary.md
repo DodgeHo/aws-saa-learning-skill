@@ -1,55 +1,29 @@
 ---
-source: 23 - Machine Learning\013 Machine Learning Summary_zh.srt
+source: 23 - Machine Learning & AI\013 Machine Learning Summary_zh.srt
 ---
 
-讲师：现在我们来谈谈AWS上的机器学习服务,
+## 学习目标
 
-你必须记住所有这些服务, 然后进入考试｡
+- 回顾本章涵盖的主要机器学习与 AI 服务及其适用场景（视觉、语音、文本、推荐、平台服务）。 
 
-所以, 识别是一种进行人脸检测､
+## 重点速览
 
-标记和名人识别的方法｡
+- 本章重点服务包括 Rekognition、Polly、Translate、Lex、Comprehend Medical、SageMaker、Kendra、Personalize、Textract 等；每项服务针对特定问题域。 
 
-Transcribe是为你获取､
+## 详细内容
 
-获取字幕的一种方式｡
+- 总结要点：
+  - 识别型服务（Rekognition/Textract）侧重从图像/文档提取结构化信息；NLP 服务（Comprehend、Translate）负责文本理解与翻译。 
+  - 交互式与语音服务（Polly、Lex、Connect）适配客服与交互场景；推荐与搜索（Personalize、Kendra）提升用户体验；SageMaker 提供训练与部署平台。 
 
-例如, 将音频转换为文本｡ 
+- 组合与架构：
+  - 实际系统常将多项服务组合使用：例如使用 Textract 提取文本并通过 Comprehend 做实体抽取，再通过 SageMaker 做进一步模型训练与预测。 
 
-而波莉则相反｡ 
+## 自测问题
 
-它可以让你得到,
+- 说明一个将 Textract、Comprehend 与 SageMaker 组合用于文档分析与自动分发的高层架构。 
+- 列出三种将本章服务组合在一起的实际用例。 
 
-使用你的文本, 并创建音频出来｡
+## 术语与易错点（将在全部章节完成后汇总）
 
-翻译是为您获得翻译｡ 
-
-莱克斯是要制造会说话的机器人或聊天机器人｡ 
-
-如果你把它和Connect捆绑在一起,
-
-那么你就可以创建一个云联络中心｡
-
-理解是你进行自然语言处理的一种方式｡
-
-SageMaker是一个功能齐全的机器学习服务,
-
-可供开发人员和数据科学家访问｡
-
-预测允许您建立高度准确的预测｡ 
-
-Kendra将成为ML支持的文档搜索引擎｡ 
-
-“个性化”用于为客户提供实时个性化建议｡
-
-而Textract用于检测文本和数据,
-
-并从各种文档中提取它们｡
-
-希望你们能记住这张单子｡ 
-
-这会让你在考试中得几分｡ 
-
-我希望你们喜欢这节课,
-
-下节课再见｡
+- （统一汇总，稍后添加）

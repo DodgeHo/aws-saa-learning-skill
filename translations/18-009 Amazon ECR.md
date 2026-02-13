@@ -1,3 +1,21 @@
+**学习目标**
+- 了解 Amazon ECR 的功能与用途
+- 掌握 ECR 与 ECS 的集成与 IAM 权限要点
+
+**重点速览**
+- Amazon ECR 是用于存储和管理 Docker 镜像的托管服务（私有或公共仓库）
+- ECR 与 ECS 完全集成，镜像由 ECR 后端存储（S3）并由 IAM 管理访问权限
+- ECR 支持镜像扫描、标签与生命周期策略，便于安全与版本管理
+
+**详细内容**
+Amazon ECR（Elastic Container Registry）提供私有仓库与公共库选项，方便团队存储和分发 Docker 镜像。ECR 与 ECS 紧密集成：运行任务的实例或 Fargate 任务需要具备合适的 IAM 权限（通过实例角色或任务角色）来从 ECR 拉取镜像。
+
+ECR 的关键特性包括镜像漏洞扫描、图像标签管理、版本控制与生命周期策略（自动清理陈旧标签）。在调试权限错误时，应检查 IAM 策略是否允许对 ECR 的 Pull/Describe 操作。
+
+**自测问题**
+- 如何为 EC2 实例授权从 ECR 拉取镜像？
+- ECR 提供哪些帮助镜像安全与管理的功能？
+- ECR 镜像实际存储在哪里？
 ---
 source: 18 - Containers on AWS ECS, Fargate, ECR & EKS\009 Amazon ECR_zh.srt
 ---

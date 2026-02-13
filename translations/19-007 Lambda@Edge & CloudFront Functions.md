@@ -2,9 +2,27 @@
 source: 19 - Serverless Overviews from a Solution Architect Perspective\007 Lambda@Edge & CloudFront Functions_zh.srt
 ---
 
-讲师：现在我们来谈谈“边缘定制”｡
+**学习目标**
+- 理解 Lambda@Edge 与 CloudFront Functions 的差异与典型用例
+- 能够选择合适的边缘执行方式来实现低延迟请求处理与缓存策略
 
-那么这意味着什么呢？
+**重点速览**
+- CloudFront Functions：轻量级 JavaScript，在查看器请求/响应阶段运行，启动极快、延迟极低，适合头部改写、缓存键规范化、简单鉴权等场景
+- Lambda@Edge：在边缘节点运行的 Lambda（Node.js / Python），功能更强、可访问网络与外部服务，适合复杂逻辑与第三方集成
+- 两者均将逻辑下沉到边缘以降低回源延迟，但在性能、运行时与用例上有清晰区别
+
+**详细内容**
+边缘函数用于将部分请求或响应处理移到 CloudFront 边缘位置，从而减少往返延迟。典型使用场景包括：缓存键规范化、URL 重写/重定向、响应头操作、A/B 测试、边缘鉴权与 Bot 缓解等。
+
+差异要点：
+- 运行时与能力：CloudFront Functions 只支持轻量 JavaScript，执行时间极短（亚毫秒级）；Lambda@Edge 支持 Node.js/Python，允许更长执行时间（数秒）、加载第三方库并访问外部网络或 AWS SDK。
+- 性能与规模：CloudFront Functions 面向每秒数百万请求的高 QPS；Lambda@Edge 适用于需要更多计算或集成的场景。
+- 部署与传播：边缘部署会将代码分发到多个边缘位置，发布时需注意版本传播延迟与回滚策略。
+
+**自测问题**
+- CloudFront Functions 与 Lambda@Edge 在可用运行时与典型用例上有何不同？
+- 在边缘实现鉴权或缓存键优化时，如何选择两者？
+- 边缘部署有哪些运维或发布时注意点？
 
 我们知道我们在特定区域部署我们的功能和应用程序,
 
