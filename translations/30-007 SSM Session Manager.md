@@ -15,3 +15,7 @@
 
 1. 列出使用 Session Manager 替代 Bastion Host 的三个好处。
 2. 描述如何启用会话记录以进行审计。
+
+---
+
+**补充资源**：课程术语与易错点汇总请见仓库根的 [GLOSSARY.md](../GLOSSARY.md) 与 [COMMON_MISTAKES.md](../COMMON_MISTAKES.md)。

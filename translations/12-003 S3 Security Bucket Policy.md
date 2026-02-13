@@ -30,6 +30,9 @@ Bucket 策略：
 - 若业务确实需要公共访问，需谨慎关闭相应阻止项并评估风险
 
 ## 自测问题
-- IAM 策略与 Bucket 策略冲突时如何决策？
-- 为什么推荐使用 Bucket 策略而非对象 ACL 来实现跨账户访问？
-- “阻止公共访问”打开后会阻止哪些行为？
+
+```
+
+---
+
+**补充资源**：课程术语与易错点汇总请见仓库根的 [GLOSSARY.md](../GLOSSARY.md) 与 [COMMON_MISTAKES.md](../COMMON_MISTAKES.md)。

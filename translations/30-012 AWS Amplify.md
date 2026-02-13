@@ -15,3 +15,7 @@
 
 1. Amplify 如何简化前端与后端的集成工作流？
 2. 在使用 Amplify 托管生产站点时应注意哪些安全与性能设置？
+
+---
+
+**补充资源**：课程术语与易错点汇总请见仓库根的 [GLOSSARY.md](../GLOSSARY.md) 与 [COMMON_MISTAKES.md](../COMMON_MISTAKES.md)。

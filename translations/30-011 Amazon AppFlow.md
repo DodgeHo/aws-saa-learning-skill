@@ -15,3 +15,6 @@
 
 1. AppFlow 常用于哪类业务场景？列举两个示例。
 2. 在大批量数据同步时，如何保证字段级别的数据一致性？
+---
+
+**补充资源**：课程术语与易错点汇总请见仓库根的 [GLOSSARY.md](../GLOSSARY.md) 与 [COMMON_MISTAKES.md](../COMMON_MISTAKES.md)。

@@ -15,3 +15,7 @@
 
 1. 描述如何使用 Parameter Store 存储并检索应用配置的安全密钥。
 2. 当需要在数百台实例上执行相同脚本时，应优先使用 SSM 的哪个功能？为什么？
+
+---
+
+**补充资源**：课程术语与易错点汇总请见仓库根的 [GLOSSARY.md](../GLOSSARY.md) 与 [COMMON_MISTAKES.md](../COMMON_MISTAKES.md)。

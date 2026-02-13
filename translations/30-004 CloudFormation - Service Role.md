@@ -3,10 +3,8 @@
 - 理解 CloudFormation 服务角色（IAM Role）的作用及最小权限实践。
 
 ## 重点速览
-
 - CloudFormation 可使用一个服务角色来代表用户执行对 AWS 资源的创建/更新操作，建议使用最小权限原则并限定为特定操作/资源。
 
-## 详细内容
 
 1. 服务角色授予 CloudFormation 在创建/更新堆栈时操作资源的权限；通过 `RoleARN` 参数在创建堆栈时指定。
 2. 最佳实践：为不同环境使用不同角色、限制权限范围、开启 CloudTrail 审计服务角色活动并定期评审策略。
@@ -15,3 +13,5 @@
 
 1. 为什么要为 CloudFormation 指定服务角色而不是使用创建者的权限？
 2. 列出两项为服务角色实施的安全控制措施。
+---
+**补充资源**：课程术语与易错点汇总请见仓库根的 [GLOSSARY.md](../GLOSSARY.md) 与 [COMMON_MISTAKES.md](../COMMON_MISTAKES.md)。
