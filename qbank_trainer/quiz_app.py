@@ -1,14 +1,31 @@
 import json
+import logging
 import os
+import random
 import sqlite3
 import threading
 from pathlib import Path
-from tkinter import END, LEFT, RIGHT, BOTH, X, Y, Menu, StringVar, Tk, Toplevel
+from tkinter import (
+    END,
+    LEFT,
+    RIGHT,
+    BOTH,
+    X,
+    Y,
+    Menu,
+    StringVar,
+    BooleanVar,
+    Tk,
+    Toplevel,
+)
 from tkinter import filedialog, messagebox
 from tkinter import ttk
 from tkinter.scrolledtext import ScrolledText
 
 import requests
+
+# simple logging to console for debugging
+logging.basicConfig(level=logging.INFO)
 
 APP_DIR = Path(os.getenv("APPDATA", str(Path.home()))) / "aws-saa-trainer"
 CONFIG_PATH = APP_DIR / "config.json"
@@ -56,11 +73,22 @@ class QBankApp:
         self.api_key = load_env_key() or os.getenv("DEEPSEEK_API_KEY") or self.config.get("deepseek_api_key", "")
 
         self.conn: sqlite3.Connection | None = None
+        # maintain full and filtered question lists
+        self.all_questions: list[dict] = []
         self.questions: list[dict] = []
         self.current_index = 0
 
+        # remember filter/random state across sessions
+        self.filter_mode = self.config.get("filter_mode", "All")
+        self.random_order = self.config.get("random_order", False)
+
+        # ui-bound variables
         self.top_info = StringVar(value="未加载题库")
         self.status_info = StringVar(value="状态：未标记")
+        self.filter_var = StringVar(value=self.filter_mode)
+        self.random_var = BooleanVar(value=self.random_order)
+        self.jump_var = StringVar()
+        self.progress_var = StringVar(value="进度: 0/0")
 
         self._build_ui()
         self._open_db_on_startup()
@@ -74,6 +102,29 @@ class QBankApp:
         ttk.Button(toolbar, text="上一题", command=self.prev_question).pack(side=LEFT, padx=12)
         ttk.Button(toolbar, text="下一题", command=self.next_question).pack(side=LEFT, padx=4)
 
+        # filtering controls
+        ttk.Label(toolbar, text="过滤:").pack(side=LEFT, padx=(12,2))
+        cb = ttk.Combobox(
+            toolbar,
+            textvariable=self.filter_var,
+            values=["All", "Know", "DontKnow", "Favorite"],
+            state="readonly",
+            width=10,
+        )
+        cb.pack(side=LEFT, padx=2)
+        ttk.Button(toolbar, text="应用", command=self.apply_filter).pack(side=LEFT, padx=2)
+        ttk.Button(toolbar, text="清除", command=self.clear_filter).pack(side=LEFT, padx=2)
+
+        # random toggle
+        ttk.Checkbutton(
+            toolbar, text="随机", variable=self.random_var, command=self.toggle_random
+        ).pack(side=LEFT, padx=4)
+
+        # jump to question
+        ttk.Entry(toolbar, textvariable=self.jump_var, width=5).pack(side=LEFT, padx=4)
+        ttk.Button(toolbar, text="跳转", command=self.go_to_question).pack(side=LEFT, padx=2)
+
+        ttk.Label(toolbar, textvariable=self.progress_var).pack(side=RIGHT, padx=4)
         ttk.Label(toolbar, textvariable=self.top_info).pack(side=RIGHT)
 
         body = ttk.Panedwindow(self.root, orient="horizontal")
@@ -168,17 +219,40 @@ class QBankApp:
             self.conn.row_factory = sqlite3.Row
             self._ensure_runtime_tables()
             cur = self.conn.cursor()
-            self.questions = [dict(row) for row in cur.execute("SELECT * FROM questions ORDER BY CAST(q_num AS INTEGER), id").fetchall()]
-            self.current_index = 0
+            # load the full set of questions and keep a master copy
+            self.all_questions = [
+                dict(row)
+                for row in cur.execute(
+                    "SELECT * FROM questions ORDER BY CAST(q_num AS INTEGER), id"
+                ).fetchall()
+            ]
+            self.questions = list(self.all_questions)
+
             self.db_path = db_path
             self.config["last_opened_db"] = db_path
             save_config(self.config)
+
             if not self.questions:
                 messagebox.showwarning("提示", "数据库中没有 questions 数据。")
                 return
+
+            # apply saved options
+            if self.random_order:
+                random.shuffle(self.questions)
+            if self.filter_mode != "All":
+                self.apply_filter()
+
+            stored = self.config.get("last_index", {})
+            last_idx = stored.get(db_path, 0)
+            if 0 <= last_idx < len(self.questions):
+                self.current_index = last_idx
+            else:
+                self.current_index = 0
+
             self.render_question()
         except Exception as exc:
             messagebox.showerror("打开数据库失败", str(exc))
+            logging.exception("failed to open database")
 
     def _ensure_runtime_tables(self) -> None:
         if not self.conn:
@@ -224,6 +298,10 @@ class QBankApp:
 
         status = self.get_status(question["id"])
         self.status_info.set(f"状态：{status if status else '未标记'}")
+
+        # update and persist progress
+        self.update_progress_info()
+        self.save_progress()
 
         options_zh = self._safe_json_list(question.get("options_zh"))
         options_en = self._safe_json_list(question.get("options_en"))
@@ -294,6 +372,10 @@ class QBankApp:
         )
         self.conn.commit()
         self.status_info.set(f"状态：{status}")
+        # may change filtered set
+        if self.filter_mode != "All":
+            self.apply_filter()
+        self.save_progress()
 
     def open_settings(self) -> None:
         win = Toplevel(self.root)
@@ -358,7 +440,11 @@ class QBankApp:
                 output = data["choices"][0]["message"]["content"]
                 self.root.after(0, lambda: self._append_ai_block("AI 回复", output))
             except Exception as exc:
-                self.root.after(0, lambda: self._append_ai_block("系统", f"请求失败：{exc}"))
+                logging.exception("DeepSeek request failed")
+                def handle_error():
+                    messagebox.showerror("请求失败", str(exc))
+                    self._append_ai_block("系统", f"请求失败：{exc}")
+                self.root.after(0, handle_error)
 
         threading.Thread(target=worker, daemon=True).start()
 
@@ -394,6 +480,73 @@ class QBankApp:
             menu.tk_popup(event.x_root, event.y_root)
 
         self.ai_text.bind("<Button-3>", show_menu)
+
+    # -----------------------------------------------------------
+    # auxiliary methods for filtering, progress and navigation
+    # -----------------------------------------------------------
+
+    def save_progress(self) -> None:
+        """remember current index per database in config."""
+        if not self.db_path:
+            return
+        self.config.setdefault("last_index", {})[self.db_path] = self.current_index
+        save_config(self.config)
+
+    def update_progress_info(self) -> None:
+        idx = self.current_index + 1
+        total = len(self.questions)
+        self.progress_var.set(f"进度: {idx}/{total}")
+
+    def apply_filter(self) -> None:
+        mode = self.filter_var.get()
+        self.filter_mode = mode
+        self.config["filter_mode"] = mode
+        save_config(self.config)
+
+        if mode == "All":
+            self.questions = list(self.all_questions)
+        else:
+            self.questions = [
+                q
+                for q in self.all_questions
+                if self.get_status(q["id"]) == mode
+            ]
+
+        if self.random_var.get():
+            random.shuffle(self.questions)
+
+        self.current_index = 0
+        self.render_question()
+
+    def clear_filter(self) -> None:
+        self.filter_var.set("All")
+        self.apply_filter()
+
+    def go_to_question(self) -> None:
+        try:
+            num = int(self.jump_var.get())
+        except ValueError:
+            messagebox.showwarning("输入错误", "请输入有效的题号")
+            return
+        if num < 1 or num > len(self.questions):
+            messagebox.showwarning("范围错误", "题号超出范围")
+            return
+        self.current_index = num - 1
+        self.render_question()
+
+    def toggle_random(self) -> None:
+        self.random_order = self.random_var.get()
+        self.config["random_order"] = self.random_order
+        save_config(self.config)
+
+        if self.random_order:
+            random.shuffle(self.questions)
+        else:
+            order = {q["id"]: i for i, q in enumerate(self.all_questions)}
+            self.questions.sort(key=lambda q: order.get(q["id"], 0))
+
+        self.current_index = 0
+        self.render_question()
 
 
 def main() -> None:
