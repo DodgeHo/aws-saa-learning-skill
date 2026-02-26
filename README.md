@@ -31,6 +31,43 @@
 - **中文优先**: 材料来自中文字幕, 术语保留英文
 - **进度追踪**: 在 Obsidian Vault 中管理进度与复习
 
+## 新增子项目: QBank 背题工具（Windows MVP）
+
+在不影响原学习流程的前提下，仓库新增了一个一次性题库导入 + 背题应用子目录：`qbank_trainer/`。
+
+### 你可以做什么
+
+- 基于本地 SQLite 题库一题一题背题（上一题 / 下一题）
+- 标记题目状态（会 / 不会 / 收藏）
+- 显示答案与解析
+- 一键调用 DeepSeek 4 个快捷问题 + 自定义提问
+
+### 快速开始
+
+1. 如果不希望安装 Python，可以直接下载 [GitHub Release](https://github.com/DodgeHo/aws-saa-learning-skill/releases) 中的 `qbank_trainer-vX.Y.zip`，解压后双击 `qbank_trainer.exe`。
+2. 或者进入 `qbank_trainer/` 子目录并安装依赖（仅导入与运行所需）。
+3. 准备 `qbank_trainer/data.db`（已生成可直接使用）。
+4. 一键运行（Windows）：双击根目录 `run_qbank.bat`
+5. 或命令行运行：`python qbank_trainer/quiz_app.py`
+
+### DeepSeek Key 配置
+
+推荐使用 `qbank_trainer/.env`：
+
+```
+DEEPSEEK_API_KEY=你的key
+```
+
+读取优先级：`.env` > 系统环境变量 `DEEPSEEK_API_KEY` > 本地配置文件。
+
+### 子项目文档
+
+- `qbank_trainer/README.md`: 背题工具与导入工具说明
+- `qbank_trainer/build_release.ps1`: Powershell 脚本，自动构建并打包 Windows 发行版
+- `PROJECT_PLAN.md`: 本次实现记录与阶段日志
+
+> 说明：原有学习系统文档（本 README、SKILL.md、translations 与 references 相关说明）均保留不变。
+
 ## 安装
 
 1. 将此文件夹复制到你的 Skills 目录:
@@ -85,7 +122,13 @@ aws-saa-learning/
 ├── SKILL.md
 ├── README.md
 ├── CHANGELOG.md
+├── PROJECT_PLAN.md
 ├── ISSUES.md
+├── qbank_trainer/
+│   ├── README.md
+│   ├── quiz_app.py
+│   ├── data.db
+│   └── src/
 ├── references/
 │   ├── course-content.md
 │   ├── content-audit.md

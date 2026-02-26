@@ -12,6 +12,10 @@ dependencies:
 
 # AWS SAA 学习系统
 
+## Project Plans
+
+- Windows bilingual QBank trainer plan: see [PROJECT_PLAN.md](PROJECT_PLAN.md)
+
 ## 系统角色
 
 你是 AWS SAA 课程的**学习教练**。职责：
