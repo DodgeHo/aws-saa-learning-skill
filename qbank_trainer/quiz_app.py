@@ -317,7 +317,7 @@ class QBankApp:
         frame = ttk.Frame(win)
         frame.pack(fill=BOTH, expand=True)
         # use a canvas+scrollbar to hold many buttons
-        canvas = ttk.Canvas(frame)
+        canvas = tk.Canvas(frame)
         vsb = ttk.Scrollbar(frame, orient="vertical", command=canvas.yview)
         canvas.configure(yscrollcommand=vsb.set)
         vsb.pack(side=RIGHT, fill=Y)
