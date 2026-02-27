@@ -5,6 +5,7 @@ import random
 import sqlite3
 import threading
 from pathlib import Path
+import tkinter as tk
 from tkinter import (
     END,
     LEFT,
@@ -17,12 +18,27 @@ from tkinter import (
     BooleanVar,
     Tk,
     Toplevel,
+    Button,
 )
 from tkinter import filedialog, messagebox
 from tkinter import ttk
 from tkinter.scrolledtext import ScrolledText
 
 import requests
+
+# colors used for question status overview
+STATUS_COLORS = {
+    None: "#a9a9a9",        # deep gray for unanswered
+    "Know": "#90ee90",     # light green
+    "DontKnow": "#f08080", # light coral
+    "Favorite": "#ffd700", # gold (used for star or background when favorite)
+}
+STAR_CHAR = "★"
+
+# filter display -> internal mapping
+FILTER_MAP = {"所有": "All", "会": "Know", "不会": "DontKnow", "收藏": "Favorite"}
+# for status label display
+STATUS_DISPLAY = {"Know": "会", "DontKnow": "不会", "Favorite": "收藏"}
 
 # simple logging to console for debugging
 logging.basicConfig(level=logging.INFO)
@@ -68,9 +84,18 @@ class QBankApp:
         self.root.title("AWS-SAA 背题助手 (MVP)")
         self.root.geometry("1300x800")
 
+        # load configuration and migrate old keys if necessary
         self.config = load_config()
+        # compatibility: move deepseek_api_key into provider_keys
+        if "deepseek_api_key" in self.config and "provider_keys" not in self.config:
+            self.config.setdefault("provider_keys", {})["deepseek"] = self.config.pop("deepseek_api_key")
+            save_config(self.config)  # write migration back out
         self.db_path = self.config.get("last_opened_db", "")
-        self.api_key = load_env_key() or os.getenv("DEEPSEEK_API_KEY") or self.config.get("deepseek_api_key", "")
+
+        # AI provider configuration
+        self.ai_provider = self.config.get("ai_provider", "deepseek")
+        self.provider_keys: dict = self.config.get("provider_keys", {})
+        self.api_key = load_env_key() or os.getenv("DEEPSEEK_API_KEY") or self.provider_keys.get(self.ai_provider, "")
 
         self.conn: sqlite3.Connection | None = None
         # maintain full and filtered question lists
@@ -82,10 +107,15 @@ class QBankApp:
         self.filter_mode = self.config.get("filter_mode", "All")
         self.random_order = self.config.get("random_order", False)
 
+        # font size setting
+        self.font_size = self.config.get("font_size", 11)
+
         # ui-bound variables
         self.top_info = StringVar(value="未加载题库")
         self.status_info = StringVar(value="状态：未标记")
-        self.filter_var = StringVar(value=self.filter_mode)
+        # display filter value for combobox
+        disp = next((k for k,v in FILTER_MAP.items() if v == self.filter_mode), "所有")
+        self.filter_var = StringVar(value=disp)
         self.random_var = BooleanVar(value=self.random_order)
         self.jump_var = StringVar()
         self.progress_var = StringVar(value="进度: 0/0")
@@ -94,20 +124,33 @@ class QBankApp:
         self._open_db_on_startup()
 
     def _build_ui(self) -> None:
+        # overall style
+        style = ttk.Style(self.root)
+        style.configure("StatusLabel.TLabel", padding=2)
+
+        self._build_toolbar()
+        self._build_body()
+        # after widgets exist, ensure ai buttons reflect key availability
+        self._update_ai_button_state()
+        self._check_api_key_prompt()
+
+    def _build_toolbar(self) -> None:
         toolbar = ttk.Frame(self.root)
         toolbar.pack(fill=X, padx=8, pady=8)
 
         ttk.Button(toolbar, text="打开数据库", command=self.open_db).pack(side=LEFT, padx=4)
-        ttk.Button(toolbar, text="设置 DeepSeek Key", command=self.open_settings).pack(side=LEFT, padx=4)
+        self.settings_button = ttk.Button(toolbar, text="设置 Key", command=self.open_settings)
+        self.settings_button.pack(side=LEFT, padx=4)
+        ttk.Button(toolbar, text="题目概览", command=self.show_overview).pack(side=LEFT, padx=4)
         ttk.Button(toolbar, text="上一题", command=self.prev_question).pack(side=LEFT, padx=12)
         ttk.Button(toolbar, text="下一题", command=self.next_question).pack(side=LEFT, padx=4)
 
-        # filtering controls
-        ttk.Label(toolbar, text="过滤:").pack(side=LEFT, padx=(12,2))
+        # filter controls (label changed to 筛选)
+        ttk.Label(toolbar, text="筛选:").pack(side=LEFT, padx=(12, 2))
         cb = ttk.Combobox(
             toolbar,
             textvariable=self.filter_var,
-            values=["All", "Know", "DontKnow", "Favorite"],
+            values=list(FILTER_MAP.keys()),
             state="readonly",
             width=10,
         )
@@ -120,13 +163,20 @@ class QBankApp:
             toolbar, text="随机", variable=self.random_var, command=self.toggle_random
         ).pack(side=LEFT, padx=4)
 
-        # jump to question
-        ttk.Entry(toolbar, textvariable=self.jump_var, width=5).pack(side=LEFT, padx=4)
+        # jump controls with placeholder
+        self.jump_entry = ttk.Entry(toolbar, textvariable=self.jump_var, width=5)
+        self.jump_entry.pack(side=LEFT, padx=4)
+        self.jump_entry.insert(0, "题号")
+        self.jump_entry.bind("<FocusIn>", lambda e: self._clear_placeholder())
+        self.jump_entry.bind("<FocusOut>", lambda e: self._restore_placeholder())
         ttk.Button(toolbar, text="跳转", command=self.go_to_question).pack(side=LEFT, padx=2)
+
+        ttk.Button(toolbar, text="清空刷题记录", command=self.reset_progress).pack(side=LEFT, padx=12)
 
         ttk.Label(toolbar, textvariable=self.progress_var).pack(side=RIGHT, padx=4)
         ttk.Label(toolbar, textvariable=self.top_info).pack(side=RIGHT)
 
+    def _build_body(self) -> None:
         body = ttk.Panedwindow(self.root, orient="horizontal")
         body.pack(fill=BOTH, expand=True, padx=8, pady=8)
 
@@ -135,14 +185,9 @@ class QBankApp:
         body.add(left, weight=3)
         body.add(right, weight=2)
 
-        status_bar = ttk.Frame(left)
-        status_bar.pack(fill=X, pady=(0, 6))
-        ttk.Label(status_bar, textvariable=self.status_info).pack(side=LEFT)
-        ttk.Button(status_bar, text="会", command=lambda: self.mark_status("Know")).pack(side=RIGHT, padx=3)
-        ttk.Button(status_bar, text="不会", command=lambda: self.mark_status("DontKnow")).pack(side=RIGHT, padx=3)
-        ttk.Button(status_bar, text="收藏", command=lambda: self.mark_status("Favorite")).pack(side=RIGHT, padx=3)
+        self._build_status_bar(left)
 
-        self.question_text = ScrolledText(left, wrap="word", font=("Microsoft YaHei UI", 11))
+        self.question_text = ScrolledText(left, wrap="word", font=("Microsoft YaHei UI", self.font_size))
         self.question_text.pack(fill=BOTH, expand=True)
 
         answer_wrap = ttk.Frame(left)
@@ -150,47 +195,51 @@ class QBankApp:
         answer_label = ttk.Label(answer_wrap, text="答案与解析")
         answer_label.pack(side=LEFT)
         ttk.Button(answer_wrap, text="显示答案/解析", command=self.show_answer).pack(side=RIGHT)
-        self.answer_text = ScrolledText(left, wrap="word", height=10, font=("Microsoft YaHei UI", 10))
+        self.answer_text = ScrolledText(
+            left, wrap="word", height=10, font=("Microsoft YaHei UI", self.font_size - 1)
+        )
         self.answer_text.pack(fill=BOTH, expand=False)
 
-        ttk.Label(right, text="AI 辅助提问（DeepSeek）", font=("Microsoft YaHei UI", 11, "bold")).pack(anchor="w")
+        self._build_ai_panel(right)
 
-        ttk.Button(
-            right,
-            text="这题用到了什么知识？",
-            command=lambda: self.ask_ai("请总结这道题涉及的 AWS-SAA 核心知识点，按 3-5 条列出。"),
-        ).pack(fill=X, pady=4)
+    def _build_status_bar(self, parent) -> None:
+        status_bar = ttk.Frame(parent)
+        status_bar.pack(fill=X, pady=(0, 6))
+        self.status_label = ttk.Label(status_bar, textvariable=self.status_info, style="StatusLabel.TLabel")
+        self.status_label.pack(side=LEFT)
+        ttk.Button(status_bar, text="会", command=lambda: self.mark_status("Know")).pack(side=RIGHT, padx=3)
+        ttk.Button(status_bar, text="不会", command=lambda: self.mark_status("DontKnow")).pack(side=RIGHT, padx=3)
+        ttk.Button(status_bar, text="收藏", command=lambda: self.mark_status("Favorite")).pack(side=RIGHT, padx=3)
 
-        ttk.Button(
-            right,
-            text="这道题是什么意思？",
-            command=lambda: self.ask_ai("请用通俗中文解释这道题在问什么，并指出关键词。"),
-        ).pack(fill=X, pady=4)
+    def _build_ai_panel(self, parent) -> None:
+        self.ai_header_label = ttk.Label(parent, text="AI 辅助提问（{}）".format(self.ai_provider.capitalize()),
+                                        font=("Microsoft YaHei UI", self.font_size, "bold"))
+        self.ai_header_label.pack(anchor="w")
 
-        ttk.Button(
-            right,
-            text="为什么是这个结果？",
-            command=lambda: self.ask_ai("请解释为什么该答案正确，并说明其他选项为什么不正确。"),
-        ).pack(fill=X, pady=4)
+        btns = [
+            ("这题用到了什么知识？", "请总结这道题涉及的 AWS-SAA 核心知识点，按 3-5 条列出。"),
+            ("这道题是什么意思？", "请用通俗中文解释这道题在问什么，并指出关键词。"),
+            ("为什么是这个结果？", "请解释为什么该答案正确，并说明其他选项为什么不正确。"),
+            ("我没看懂，能更简单吗？", "请用更简单、面向初学者的方式重讲，并给一个生活类比。"),
+        ]
+        self.ai_buttons: list[ttk.Button] = []
+        for text, instr in btns:
+            btn = ttk.Button(parent, text=text, command=lambda i=instr: self.ask_ai(i))
+            btn.pack(fill=X, pady=4)
+            self.ai_buttons.append(btn)
 
-        ttk.Button(
-            right,
-            text="我没看懂，能更简单吗？",
-            command=lambda: self.ask_ai("请用更简单、面向初学者的方式重讲，并给一个生活类比。"),
-        ).pack(fill=X, pady=4)
-
-        custom_wrap = ttk.Frame(right)
+        custom_wrap = ttk.Frame(parent)
         custom_wrap.pack(fill=X, pady=8)
         ttk.Label(custom_wrap, text="自定义提问").pack(anchor="w")
         self.custom_entry = ttk.Entry(custom_wrap)
         self.custom_entry.pack(fill=X, pady=4)
         ttk.Button(custom_wrap, text="发送自定义问题", command=self.ask_ai_custom).pack(fill=X)
 
-        ai_top = ttk.Frame(right)
+        ai_top = ttk.Frame(parent)
         ai_top.pack(fill=X, pady=(8, 0))
         ttk.Label(ai_top, text="AI 输出").pack(side=LEFT)
         ttk.Button(ai_top, text="清空历史", command=self.clear_ai_history).pack(side=RIGHT)
-        self.ai_text = ScrolledText(right, wrap="word", font=("Microsoft YaHei UI", 10))
+        self.ai_text = ScrolledText(parent, wrap="word", font=("Microsoft YaHei UI", self.font_size - 1))
         self.ai_text.pack(fill=BOTH, expand=True)
         self._setup_ai_context_menu()
 
@@ -201,6 +250,108 @@ class QBankApp:
             default_db = Path(__file__).parent / "data.db"
             if default_db.exists():
                 self._connect_and_load(str(default_db))
+
+    # placeholder helpers for jump entry
+    def _clear_placeholder(self) -> None:
+        if self.jump_entry.get() == "题号":
+            self.jump_entry.delete(0, END)
+
+    def _restore_placeholder(self) -> None:
+        if not self.jump_entry.get():
+            self.jump_entry.insert(0, "题号")
+
+    def _apply_font_size(self, size: int) -> None:
+        self.font_size = size
+        if hasattr(self, "question_text"):
+            self.question_text.config(font=("Microsoft YaHei UI", self.font_size))
+        if hasattr(self, "answer_text"):
+            self.answer_text.config(font=("Microsoft YaHei UI", self.font_size - 1))
+        if hasattr(self, "ai_text"):
+            self.ai_text.config(font=("Microsoft YaHei UI", self.font_size - 1))
+
+    def _update_ai_button_state(self) -> None:
+        enabled = bool(self.api_key)
+        state = "!disabled" if enabled else "disabled"
+        for btn in getattr(self, "ai_buttons", []):
+            btn.state([state])
+        # custom question entry should also respect key
+        if hasattr(self, "custom_entry"):
+            if enabled:
+                self.custom_entry.state(["!disabled"])
+            else:
+                self.custom_entry.state(["disabled"])
+
+    def _check_api_key_prompt(self) -> None:
+        # if no key, show reminder and highlight settings button
+        if not self.api_key:
+            messagebox.showinfo("提示", "请先在设置中填写用于 AI 的 API Key。")
+            self.settings_button.configure(style="Warning.TButton")
+            style = ttk.Style(self.root)
+            style.configure("Warning.TButton", foreground="red")
+
+    def reset_progress(self) -> None:
+        if not self.conn:
+            return
+        if not messagebox.askyesno("确认", "此操作将清除所有刷题记录，无法恢复。继续？"):
+            return
+        if not messagebox.askyesno("再确认", "真的确定要清除所有记录吗？"):
+            return
+        cur = self.conn.cursor()
+        cur.execute("DELETE FROM user_status")
+        self.conn.commit()
+        # reset in-memory status
+        self.questions = list(self.all_questions)
+        self.current_index = 0
+        self.filter_var.set("All")
+        self.filter_mode = "All"
+        self.save_progress()
+        self.render_question()
+        messagebox.showinfo("完成", "刷题记录已清空。")
+
+    def show_overview(self) -> None:
+        if not self.questions:
+            return
+        win = Toplevel(self.root)
+        self.overview_window = win
+        win.title("题目概览")
+        frame = ttk.Frame(win)
+        frame.pack(fill=BOTH, expand=True)
+        # use a canvas+scrollbar to hold many buttons
+        canvas = ttk.Canvas(frame)
+        vsb = ttk.Scrollbar(frame, orient="vertical", command=canvas.yview)
+        canvas.configure(yscrollcommand=vsb.set)
+        vsb.pack(side=RIGHT, fill=Y)
+        canvas.pack(side=LEFT, fill=BOTH, expand=True)
+        inner = ttk.Frame(canvas)
+        canvas.create_window((0,0), window=inner, anchor="nw")
+
+        def on_frame_config(event):
+            canvas.configure(scrollregion=canvas.bbox("all"))
+        inner.bind("<Configure>", on_frame_config)
+
+        # build grid of question buttons
+        for idx, q in enumerate(self.all_questions, start=1):
+            status = self.get_status(q["id"])
+            bg = STATUS_COLORS.get(status, STATUS_COLORS[None])
+            btn_text = str(idx)
+            star = ""
+            if status == "Favorite":
+                star = f" {STAR_CHAR}"
+            # use regular Button so we can set bg colour reliably
+            b = Button(inner, text=str(idx) + star, width=4,
+                       command=lambda i=idx-1: self._jump_from_overview(i),
+                       bg=bg)
+            if star:
+                b.config(fg="gold")
+            r = (idx-1) // 10
+            ccol = (idx-1) % 10
+            b.grid(row=r, column=ccol, padx=1, pady=1)
+
+    def _jump_from_overview(self, index: int) -> None:
+        self.current_index = index
+        self.render_question()
+        if hasattr(self, 'overview_window') and self.overview_window.winfo_exists():
+            self.overview_window.destroy()
 
     def open_db(self) -> None:
         file_path = filedialog.askopenfilename(
@@ -294,10 +445,23 @@ class QBankApp:
 
         idx = self.current_index + 1
         total = len(self.questions)
-        self.top_info.set(f"第 {idx}/{total} 题 | q_num={question.get('q_num')}")
+        self.top_info.set(f"第 {idx}/{total} 题 | 题号为{question.get('q_num')}")
 
         status = self.get_status(question["id"])
-        self.status_info.set(f"状态：{status if status else '未标记'}")
+        disp = STATUS_DISPLAY.get(status, "未标记")
+        if status == "Favorite":
+            disp += f" {STAR_CHAR}"
+        self.status_info.set(f"状态：{disp}")
+        # color the label
+        if hasattr(self, "status_label"):
+            color = "black"
+            if status == "Know":
+                color = "green"
+            elif status == "DontKnow":
+                color = "red"
+            elif status == "Favorite":
+                color = "gold"
+            self.status_label.configure(foreground=color)
 
         # update and persist progress
         self.update_progress_info()
@@ -371,30 +535,67 @@ class QBankApp:
             (question["id"], status),
         )
         self.conn.commit()
-        self.status_info.set(f"状态：{status}")
-        # may change filtered set
+        # refresh question display (this updates status text, color and progress)
         if self.filter_mode != "All":
             self.apply_filter()
         self.save_progress()
+        self.render_question()
 
     def open_settings(self) -> None:
         win = Toplevel(self.root)
-        win.title("DeepSeek 设置")
-        win.geometry("520x140")
+        win.title("设置")
+        win.geometry("520x220")
 
-        ttk.Label(win, text="DeepSeek API Key（可明文修改）").pack(anchor="w", padx=10, pady=(10, 4))
-        key_var = StringVar(value=self.api_key)
-        entry = ttk.Entry(win, textvariable=key_var)
-        entry.pack(fill=X, padx=10, pady=4)
+        # AI provider selection
+        ttk.Label(win, text="AI 提供者").pack(anchor="w", padx=10, pady=(10, 4))
+        provider_var = StringVar(value=self.ai_provider)
+        provider_cb = ttk.Combobox(
+            win,
+            textvariable=provider_var,
+            values=["deepseek", "openai"],
+            state="readonly",
+        )
+        provider_cb.pack(fill=X, padx=10, pady=4)
+        def on_provider_change(event):
+            sel = provider_var.get()
+            key_var.set(self.provider_keys.get(sel, ""))
+        provider_cb.bind("<<ComboboxSelected>>", on_provider_change)
 
-        def save_key() -> None:
-            self.api_key = key_var.get().strip()
-            self.config["deepseek_api_key"] = self.api_key
+        ttk.Label(win, text="API Key").pack(anchor="w", padx=10, pady=(10, 4))
+        key_var = StringVar(value=self.provider_keys.get(self.ai_provider, self.api_key))
+        key_entry = ttk.Entry(win, textvariable=key_var)
+        key_entry.pack(fill=X, padx=10, pady=4)
+
+        # font size control
+        ttk.Label(win, text="字体大小").pack(anchor="w", padx=10, pady=(10, 4))
+        font_var = tk.IntVar(value=self.font_size)
+        def on_font_change(value):
+            self._apply_font_size(int(float(value)))
+        font_scale = ttk.Scale(win, from_=8, to=24, variable=font_var, orient="horizontal", command=on_font_change)
+        font_scale.pack(fill=X, padx=10, pady=4)
+
+        def save_settings() -> None:
+            self.ai_provider = provider_var.get()
+            self.provider_keys[self.ai_provider] = key_var.get().strip()
+            self.api_key = self.provider_keys.get(self.ai_provider, "")
+            self.config["ai_provider"] = self.ai_provider
+            self.config["provider_keys"] = self.provider_keys
+            self.font_size = font_var.get()
+            self.config["font_size"] = self.font_size
             save_config(self.config)
-            messagebox.showinfo("成功", "Key 已保存")
+            # apply new font size immediately
+            self.question_text.config(font=("Microsoft YaHei UI", self.font_size))
+            self.answer_text.config(font=("Microsoft YaHei UI", self.font_size - 1))
+            self.ai_text.config(font=("Microsoft YaHei UI", self.font_size - 1))
+            messagebox.showinfo("成功", "设置已保存")
             win.destroy()
+            # clear highlight on settings button
+            self.settings_button.configure(style="")
+            self._update_ai_button_state()
+            if hasattr(self, 'ai_header_label'):
+                self.ai_header_label.config(text=f"AI 辅助提问（{self.ai_provider.capitalize()}）")
 
-        ttk.Button(win, text="保存", command=save_key).pack(anchor="e", padx=10, pady=10)
+        ttk.Button(win, text="保存", command=save_settings).pack(anchor="e", padx=10, pady=10)
 
     def ask_ai_custom(self) -> None:
         text = self.custom_entry.get().strip()
@@ -405,7 +606,7 @@ class QBankApp:
 
     def ask_ai(self, instruction: str) -> None:
         if not self.api_key:
-            messagebox.showwarning("缺少 Key", "请先在设置中填写 DeepSeek API Key")
+            messagebox.showwarning("缺少 Key", "请先在设置中填写 AI 提供者的 API Key")
             return
 
         question = self.get_current()
@@ -413,34 +614,51 @@ class QBankApp:
             return
 
         self._append_ai_block("用户提问", instruction)
-        self._append_ai_block("系统", "正在请求 DeepSeek，请稍候...")
+        self._append_ai_block("系统", "正在请求 AI 服务，请稍候...")
 
         prompt = self._build_prompt(question, instruction)
 
         def worker() -> None:
             try:
-                response = requests.post(
-                    "https://api.deepseek.com/chat/completions",
-                    headers={
-                        "Authorization": f"Bearer {self.api_key}",
-                        "Content-Type": "application/json",
-                    },
-                    json={
+                if self.ai_provider == "deepseek":
+                    url = "https://api.deepseek.com/chat/completions"
+                    payload = {
                         "model": "deepseek-chat",
                         "messages": [
                             {"role": "system", "content": "你是 AWS-SAA 学习助教，请简洁、准确、中文回答。"},
                             {"role": "user", "content": prompt},
                         ],
                         "temperature": 0.3,
+                    }
+                elif self.ai_provider == "openai":
+                    url = "https://api.openai.com/v1/chat/completions"
+                    payload = {
+                        "model": "gpt-4o-mini",
+                        "messages": [
+                            {"role": "system", "content": "你是 AWS-SAA 学习助教，请简洁、准确、中文回答。"},
+                            {"role": "user", "content": prompt},
+                        ],
+                        "temperature": 0.3,
+                    }
+                else:
+                    raise ValueError(f"未知的 AI 提供者：{self.ai_provider}")
+
+                response = requests.post(
+                    url,
+                    headers={
+                        "Authorization": f"Bearer {self.api_key}",
+                        "Content-Type": "application/json",
                     },
+                    json=payload,
                     timeout=120,
                 )
                 response.raise_for_status()
                 data = response.json()
+                # deepseek and openai both use choices[0].message.content
                 output = data["choices"][0]["message"]["content"]
                 self.root.after(0, lambda: self._append_ai_block("AI 回复", output))
             except Exception as exc:
-                logging.exception("DeepSeek request failed")
+                logging.exception("AI request failed")
                 def handle_error():
                     messagebox.showerror("请求失败", str(exc))
                     self._append_ai_block("系统", f"请求失败：{exc}")
@@ -498,7 +716,8 @@ class QBankApp:
         self.progress_var.set(f"进度: {idx}/{total}")
 
     def apply_filter(self) -> None:
-        mode = self.filter_var.get()
+        disp = self.filter_var.get()
+        mode = FILTER_MAP.get(disp, "All")
         self.filter_mode = mode
         self.config["filter_mode"] = mode
         save_config(self.config)
@@ -519,7 +738,7 @@ class QBankApp:
         self.render_question()
 
     def clear_filter(self) -> None:
-        self.filter_var.set("All")
+        self.filter_var.set("所有")
         self.apply_filter()
 
     def go_to_question(self) -> None:
@@ -533,6 +752,9 @@ class QBankApp:
             return
         self.current_index = num - 1
         self.render_question()
+        # clear entry and restore placeholder
+        self.jump_var.set("")
+        self._restore_placeholder()
 
     def toggle_random(self) -> None:
         self.random_order = self.random_var.get()

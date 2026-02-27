@@ -16,15 +16,20 @@ run_qbank.bat
 
 What is included in MVP app:
 - Question-by-question review (Prev / Next)
-- Status buttons: Know / DontKnow / Favorite
+- Status buttons: Know / DontKnow / Favorite (colored labels, star for favorite)
+- Overview window showing all questions with color cues and clickable navigation
+- Chinese "筛选" menu (所有/会/不会/收藏) plus random order and jump-to-number (with placeholder)
+- Font size slider in settings
+- Reset button to clear all progress (requires double confirmation)
 - Show answer and explanations
-- 4 DeepSeek quick-help buttons
-- Custom question input for DeepSeek
-- Editable DeepSeek API key saved to `%APPDATA%/aws-saa-trainer/config.json`
+- AI assistance with provider selection (DeepSeek default, OpenAI support added)
+  - settings let you choose provider and enter its API key
+  - UI disables AI buttons until a key is provided; first run will prompt for key and highlight settings
+- Editable API key saved to `%APPDATA%/aws-saa-trainer/config.json`
 
-DeepSeek key priority:
-- `qbank_trainer/.env` (`DEEPSEEK_API_KEY=...`) (recommended)
-- `DEEPSEEK_API_KEY` environment variable
+API key priority:
+- `qbank_trainer/.env` (e.g. `DEEPSEEK_API_KEY=`) (recommended)
+- environment variable `DEEPSEEK_API_KEY`
 - fallback to `%APPDATA%/aws-saa-trainer/config.json`
 
 ## Setup
