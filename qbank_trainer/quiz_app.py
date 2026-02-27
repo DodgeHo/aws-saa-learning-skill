@@ -83,6 +83,19 @@ class QBankApp:
         self.root = root
         self.root.title("AWS-SAA 背题助手 (MVP)")
         self.root.geometry("1300x800")
+        self.root.configure(bg='#f2f2f2')
+        # apply a nicer theme and define some base styles (some depend on font_size below)
+        style = ttk.Style(self.root)
+        try:
+            style.theme_use('clam')
+        except Exception:
+            pass
+        style.configure('Toolbar.TFrame', background='#ececec')
+        # labelframe styles for question/answer
+        style.configure('Question.TLabelframe', background='white')
+        style.configure('Answer.TLabelframe', background='white')
+
+        # font_size will be set later; define button/font styles after reading config
 
         # load configuration and migrate old keys if necessary
         self.config = load_config()
@@ -109,6 +122,10 @@ class QBankApp:
 
         # font size setting
         self.font_size = self.config.get("font_size", 11)
+        # apply styles that depend on font size
+        style.configure('Toolbutton.TButton', padding=6, relief='flat', font=('Microsoft YaHei UI', self.font_size))
+        style.map('Toolbutton.TButton', background=[('active', '#d9d9d9')])
+        style.configure('StatusLabel.TLabel', padding=2, font=('Microsoft YaHei UI', self.font_size, 'bold'))
 
         # ui-bound variables
         self.top_info = StringVar(value="未加载题库")
@@ -135,15 +152,15 @@ class QBankApp:
         self._check_api_key_prompt()
 
     def _build_toolbar(self) -> None:
-        toolbar = ttk.Frame(self.root)
+        toolbar = ttk.Frame(self.root, style='Toolbar.TFrame')
         toolbar.pack(fill=X, padx=8, pady=8)
 
-        ttk.Button(toolbar, text="打开数据库", command=self.open_db).pack(side=LEFT, padx=4)
-        self.settings_button = ttk.Button(toolbar, text="设置 Key", command=self.open_settings)
+        ttk.Button(toolbar, text="📂 打开数据库", style='Toolbutton.TButton', command=self.open_db).pack(side=LEFT, padx=4)
+        self.settings_button = ttk.Button(toolbar, text="⚙️ 设置 Key", style='Toolbutton.TButton', command=self.open_settings)
         self.settings_button.pack(side=LEFT, padx=4)
-        ttk.Button(toolbar, text="题目概览", command=self.show_overview).pack(side=LEFT, padx=4)
-        ttk.Button(toolbar, text="上一题", command=self.prev_question).pack(side=LEFT, padx=12)
-        ttk.Button(toolbar, text="下一题", command=self.next_question).pack(side=LEFT, padx=4)
+        ttk.Button(toolbar, text="📋 题目概览", style='Toolbutton.TButton', command=self.show_overview).pack(side=LEFT, padx=4)
+        ttk.Button(toolbar, text="◀️ 上一题", style='Toolbutton.TButton', command=self.prev_question).pack(side=LEFT, padx=12)
+        ttk.Button(toolbar, text="下一题 ▶️", style='Toolbutton.TButton', command=self.next_question).pack(side=LEFT, padx=4)
 
         # filter controls (label changed to 筛选)
         ttk.Label(toolbar, text="筛选:").pack(side=LEFT, padx=(12, 2))
@@ -155,12 +172,12 @@ class QBankApp:
             width=10,
         )
         cb.pack(side=LEFT, padx=2)
-        ttk.Button(toolbar, text="应用", command=self.apply_filter).pack(side=LEFT, padx=2)
-        ttk.Button(toolbar, text="清除", command=self.clear_filter).pack(side=LEFT, padx=2)
+        ttk.Button(toolbar, text="应用", style='Toolbutton.TButton', command=self.apply_filter).pack(side=LEFT, padx=2)
+        ttk.Button(toolbar, text="清除", style='Toolbutton.TButton', command=self.clear_filter).pack(side=LEFT, padx=2)
 
         # random toggle
         ttk.Checkbutton(
-            toolbar, text="随机", variable=self.random_var, command=self.toggle_random
+            toolbar, text="随机", variable=self.random_var, command=self.toggle_random, style='Toolbutton.TButton'
         ).pack(side=LEFT, padx=4)
 
         # jump controls with placeholder
@@ -180,24 +197,31 @@ class QBankApp:
         body = ttk.Panedwindow(self.root, orient="horizontal")
         body.pack(fill=BOTH, expand=True, padx=8, pady=8)
 
-        left = ttk.Frame(body)
-        right = ttk.Frame(body)
+        # style the two panes differently to give visual separation
+        style = ttk.Style(self.root)
+        style.configure('Left.TFrame', background='#fafafa')
+        style.configure('Right.TFrame', background='#f5f5f5')
+
+        left = ttk.Frame(body, style='Left.TFrame')
+        right = ttk.Frame(body, style='Right.TFrame')
         body.add(left, weight=3)
         body.add(right, weight=2)
 
         self._build_status_bar(left)
 
         self.question_text = ScrolledText(left, wrap="word", font=("Microsoft YaHei UI", self.font_size))
+        self.question_text.configure(background="white", relief="groove", borderwidth=2)
         self.question_text.pack(fill=BOTH, expand=True)
 
         answer_wrap = ttk.Frame(left)
         answer_wrap.pack(fill=X, pady=(6, 0))
         answer_label = ttk.Label(answer_wrap, text="答案与解析")
         answer_label.pack(side=LEFT)
-        ttk.Button(answer_wrap, text="显示答案/解析", command=self.show_answer).pack(side=RIGHT)
+        ttk.Button(answer_wrap, text="显示答案/解析", style='Toolbutton.TButton', command=self.show_answer).pack(side=RIGHT)
         self.answer_text = ScrolledText(
             left, wrap="word", height=10, font=("Microsoft YaHei UI", self.font_size - 1)
         )
+        self.answer_text.configure(background="white", relief="groove", borderwidth=2)
         self.answer_text.pack(fill=BOTH, expand=False)
 
         self._build_ai_panel(right)
@@ -207,9 +231,9 @@ class QBankApp:
         status_bar.pack(fill=X, pady=(0, 6))
         self.status_label = ttk.Label(status_bar, textvariable=self.status_info, style="StatusLabel.TLabel")
         self.status_label.pack(side=LEFT)
-        ttk.Button(status_bar, text="会", command=lambda: self.mark_status("Know")).pack(side=RIGHT, padx=3)
-        ttk.Button(status_bar, text="不会", command=lambda: self.mark_status("DontKnow")).pack(side=RIGHT, padx=3)
-        ttk.Button(status_bar, text="收藏", command=lambda: self.mark_status("Favorite")).pack(side=RIGHT, padx=3)
+        ttk.Button(status_bar, text="会", style='Toolbutton.TButton', command=lambda: self.mark_status("Know")).pack(side=RIGHT, padx=3)
+        ttk.Button(status_bar, text="不会", style='Toolbutton.TButton', command=lambda: self.mark_status("DontKnow")).pack(side=RIGHT, padx=3)
+        ttk.Button(status_bar, text="收藏", style='Toolbutton.TButton', command=lambda: self.mark_status("Favorite")).pack(side=RIGHT, padx=3)
 
     def _build_ai_panel(self, parent) -> None:
         self.ai_header_label = ttk.Label(parent, text="AI 辅助提问（{}）".format(self.ai_provider.capitalize()),
@@ -224,7 +248,7 @@ class QBankApp:
         ]
         self.ai_buttons: list[ttk.Button] = []
         for text, instr in btns:
-            btn = ttk.Button(parent, text=text, command=lambda i=instr: self.ask_ai(i))
+            btn = ttk.Button(parent, text=text, style='Toolbutton.TButton', command=lambda i=instr: self.ask_ai(i))
             btn.pack(fill=X, pady=4)
             self.ai_buttons.append(btn)
 
@@ -233,13 +257,14 @@ class QBankApp:
         ttk.Label(custom_wrap, text="自定义提问").pack(anchor="w")
         self.custom_entry = ttk.Entry(custom_wrap)
         self.custom_entry.pack(fill=X, pady=4)
-        ttk.Button(custom_wrap, text="发送自定义问题", command=self.ask_ai_custom).pack(fill=X)
+        ttk.Button(custom_wrap, text="发送自定义问题", style='Toolbutton.TButton', command=self.ask_ai_custom).pack(fill=X)
 
         ai_top = ttk.Frame(parent)
         ai_top.pack(fill=X, pady=(8, 0))
         ttk.Label(ai_top, text="AI 输出").pack(side=LEFT)
-        ttk.Button(ai_top, text="清空历史", command=self.clear_ai_history).pack(side=RIGHT)
+        ttk.Button(ai_top, text="清空历史", style='Toolbutton.TButton', command=self.clear_ai_history).pack(side=RIGHT)
         self.ai_text = ScrolledText(parent, wrap="word", font=("Microsoft YaHei UI", self.font_size - 1))
+        self.ai_text.configure(background="white", relief="groove", borderwidth=2)
         self.ai_text.pack(fill=BOTH, expand=True)
         self._setup_ai_context_menu()
 
