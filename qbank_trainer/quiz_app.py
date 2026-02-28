@@ -28,10 +28,10 @@ import requests
 
 # colors used for question status overview
 STATUS_COLORS = {
-    None: "#a9a9a9",        # deep gray for unanswered
-    "Know": "#90ee90",     # light green
-    "DontKnow": "#f08080", # light coral
-    "Favorite": "#ffd700", # gold (used for star or background when favorite)
+    None: "#9E9E9E",        # neutral grey for unanswered
+    "Know": "#4CAF50",     # bold green
+    "DontKnow": "#F44336", # bold red
+    "Favorite": "#FFEB3B", # bright yellow
 }
 STAR_CHAR = "★"
 
@@ -90,11 +90,19 @@ class QBankApp:
             style.theme_use('clam')
         except Exception:
             pass
-        style.configure('Toolbar.TFrame', background='#ececec')
+        # toolbar with lively blue
+        style.configure('Toolbar.TFrame', background='#2196F3')
         # labelframe styles for question/answer
         style.configure('Question.TLabelframe', background='white')
         style.configure('Answer.TLabelframe', background='white')
+        # action buttons (收藏/不会/会/显示答案) use second color
+        style.configure('Action.TButton', background='#FF5722', foreground='white', padding=6)
+        style.map('Action.TButton', background=[('active', '#E64A19')])
+        # AI panel buttons use third color
+        style.configure('AI.TButton', background="#481252", foreground='white', padding=6)
+        style.map('AI.TButton', background=[('active', '#7B1FA2')])
 
+        # pane backgrounds will be set later
         # font_size will be set later; define button/font styles after reading config
 
         # load configuration and migrate old keys if necessary
@@ -123,8 +131,11 @@ class QBankApp:
         # font size setting
         self.font_size = self.config.get("font_size", 11)
         # apply styles that depend on font size
-        style.configure('Toolbutton.TButton', padding=6, relief='flat', font=('Microsoft YaHei UI', self.font_size))
-        style.map('Toolbutton.TButton', background=[('active', '#d9d9d9')])
+        style.configure('Toolbutton.TButton', padding=6, relief='flat', font=('Microsoft YaHei UI', self.font_size),
+                        background="#00486A", foreground='white')
+        style.map('Toolbutton.TButton',
+                  background=[('active', '#0288D1'), ('disabled', '#B0BEC5')],
+                  foreground=[('disabled', '#ECEFF1')])
         style.configure('StatusLabel.TLabel', padding=2, font=('Microsoft YaHei UI', self.font_size, 'bold'))
 
         # ui-bound variables
@@ -199,25 +210,44 @@ class QBankApp:
 
         # style the two panes differently to give visual separation
         style = ttk.Style(self.root)
-        style.configure('Left.TFrame', background='#fafafa')
-        style.configure('Right.TFrame', background='#f5f5f5')
+        style.configure('Left.TFrame', background='#ffffff')
+        style.configure('Right.TFrame', background='#F0F8FF')
 
         left = ttk.Frame(body, style='Left.TFrame')
         right = ttk.Frame(body, style='Right.TFrame')
         body.add(left, weight=3)
         body.add(right, weight=2)
 
-        self._build_status_bar(left)
-
+        # question display
         self.question_text = ScrolledText(left, wrap="word", font=("Microsoft YaHei UI", self.font_size))
         self.question_text.configure(background="white", relief="groove", borderwidth=2)
         self.question_text.pack(fill=BOTH, expand=True)
+
+        # action frame between question and answer
+        action_frame = ttk.Frame(left)
+        action_frame.pack(fill=X, pady=(6, 0))
+        # status label on left
+        self.status_label = ttk.Label(action_frame, textvariable=self.status_info, style="StatusLabel.TLabel")
+        self.status_label.pack(side=LEFT)
+        # action buttons: use tk.Button with second color
+        # using tk.Button with small width/height and flat relief for circular look
+        tk.Button(action_frame, text="收藏", bg="#FF5722", fg="white", width=3, height=1,
+                  bd=0, relief='flat', highlightthickness=1,
+                  command=lambda: self.mark_status("Favorite")).pack(side=RIGHT, padx=3, pady=2)
+        tk.Button(action_frame, text="不会", bg="#FF5722", fg="white", width=3, height=1,
+                  bd=0, relief='flat', highlightthickness=1,
+                  command=lambda: self.mark_status("DontKnow")).pack(side=RIGHT, padx=3, pady=2)
+        tk.Button(action_frame, text="会", bg="#FF5722", fg="white", width=3, height=1,
+                  bd=0, relief='flat', highlightthickness=1,
+                  command=lambda: self.mark_status("Know")).pack(side=RIGHT, padx=3, pady=2)
+        tk.Button(action_frame, text="答案", bg="#FF5722", fg="white", width=4, height=1,
+                  bd=0, relief='flat', highlightthickness=1,
+                  command=self.show_answer).pack(side=RIGHT, padx=6, pady=2)
 
         answer_wrap = ttk.Frame(left)
         answer_wrap.pack(fill=X, pady=(6, 0))
         answer_label = ttk.Label(answer_wrap, text="答案与解析")
         answer_label.pack(side=LEFT)
-        ttk.Button(answer_wrap, text="显示答案/解析", style='Toolbutton.TButton', command=self.show_answer).pack(side=RIGHT)
         self.answer_text = ScrolledText(
             left, wrap="word", height=10, font=("Microsoft YaHei UI", self.font_size - 1)
         )
@@ -226,14 +256,9 @@ class QBankApp:
 
         self._build_ai_panel(right)
 
+    # _build_status_bar is no longer used; actions moved inline in _build_body
     def _build_status_bar(self, parent) -> None:
-        status_bar = ttk.Frame(parent)
-        status_bar.pack(fill=X, pady=(0, 6))
-        self.status_label = ttk.Label(status_bar, textvariable=self.status_info, style="StatusLabel.TLabel")
-        self.status_label.pack(side=LEFT)
-        ttk.Button(status_bar, text="会", style='Toolbutton.TButton', command=lambda: self.mark_status("Know")).pack(side=RIGHT, padx=3)
-        ttk.Button(status_bar, text="不会", style='Toolbutton.TButton', command=lambda: self.mark_status("DontKnow")).pack(side=RIGHT, padx=3)
-        ttk.Button(status_bar, text="收藏", style='Toolbutton.TButton', command=lambda: self.mark_status("Favorite")).pack(side=RIGHT, padx=3)
+        pass
 
     def _build_ai_panel(self, parent) -> None:
         self.ai_header_label = ttk.Label(parent, text="AI 辅助提问（{}）".format(self.ai_provider.capitalize()),
@@ -248,7 +273,7 @@ class QBankApp:
         ]
         self.ai_buttons: list[ttk.Button] = []
         for text, instr in btns:
-            btn = ttk.Button(parent, text=text, style='Toolbutton.TButton', command=lambda i=instr: self.ask_ai(i))
+            btn = ttk.Button(parent, text=text, style='AI.TButton', command=lambda i=instr: self.ask_ai(i))
             btn.pack(fill=X, pady=4)
             self.ai_buttons.append(btn)
 
@@ -257,12 +282,12 @@ class QBankApp:
         ttk.Label(custom_wrap, text="自定义提问").pack(anchor="w")
         self.custom_entry = ttk.Entry(custom_wrap)
         self.custom_entry.pack(fill=X, pady=4)
-        ttk.Button(custom_wrap, text="发送自定义问题", style='Toolbutton.TButton', command=self.ask_ai_custom).pack(fill=X)
+        ttk.Button(custom_wrap, text="发送自定义问题", style='AI.TButton', command=self.ask_ai_custom).pack(fill=X)
 
         ai_top = ttk.Frame(parent)
         ai_top.pack(fill=X, pady=(8, 0))
         ttk.Label(ai_top, text="AI 输出").pack(side=LEFT)
-        ttk.Button(ai_top, text="清空历史", style='Toolbutton.TButton', command=self.clear_ai_history).pack(side=RIGHT)
+        ttk.Button(ai_top, text="清空历史", style='AI.TButton', command=self.clear_ai_history).pack(side=RIGHT)
         self.ai_text = ScrolledText(parent, wrap="word", font=("Microsoft YaHei UI", self.font_size - 1))
         self.ai_text.configure(background="white", relief="groove", borderwidth=2)
         self.ai_text.pack(fill=BOTH, expand=True)
