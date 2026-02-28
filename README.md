@@ -31,47 +31,54 @@
 - **中文优先**: 材料来自中文字幕, 术语保留英文
 - **进度追踪**: 在 Obsidian Vault 中管理进度与复习
 
-## 新增子项目: QBank 背题工具（Windows MVP）
+## Flutter 题库助手 (跨平台)
 
-在不影响原学习流程的前提下，仓库新增了一个一次性题库导入 + 背题应用子目录：`qbank_trainer/`。
+本仓库已移除旧的 Python/Tkinter 实现，所有功能已迁移到 Flutter。
+生成的应用支持 Windows、macOS、Linux 桌面，以及 Android 手机/平板（Web 可选）。
+界面采用响应式布局：宽屏时使用侧边 NavigationRail，窄屏时自动切换到底部导航，兼容键鼠与触屏。
 
-### 你可以做什么
+功能概览：
 
-- 基于本地 SQLite 题库一题一题背题（上一题 / 下一题）
-- 标记题目状态（会 / 不会 / 收藏），状态会用颜色高亮，收藏题目带星号
-- 在“题目概览”窗口查看所有题的状态（灰/绿/红/黄＋星标），可直接跳转
-- 支持中文“筛选”菜单（所有/会/不会/收藏）、随机顺序、按题号跳转、清空刷题记录
-- 显示答案与解析，字体大小可通过设置中的滑杆调整
-- AI 辅助可以接入 DeepSeek、OpenAI 等服务，设置中选择提供者并填写 API Key
-  - 初次运行若未配置 Key 会弹窗提醒并高亮“设置 Key”按钮
-  - AI 按钮在无 Key 情况下禁用
-- 包括上一版中一键调用 DeepSeek 的四个常用问题以及自定义提问框
+- 启动时从 `assets/data.db` 复制题库到本地 SQLite 数据库。
+- 按状态筛选题目（All/Know/DontKnow/Favorite），支持随机顺序。
+- 浏览题目、显示答案，记录和查询状态、进度。
+- 题目概览页面可跳转、统计各类题目数量。
+- AI 问答模块，留有 TODO 位置用于接入 Deepseek/OpenAI 等服务。
+- 设置页面可调整字体大小、选择 AI 提供者及输入 API Key，保存于本地。
+- 全局状态由 `AppModel` 使用 `provider` 管理。
 
-### 快速开始
+快速启动：
 
-1. 如果不希望安装 Python，可以直接下载 [GitHub Release](https://github.com/DodgeHo/aws-saa-learning-skill/releases) 中的 `qbank_trainer-vX.Y.zip`，解压后双击 `qbank_trainer.exe`。
-2. 或者进入 `qbank_trainer/` 子目录并安装依赖（仅导入与运行所需）。
-3. 准备 `qbank_trainer/data.db`（已生成可直接使用）。
-4. 一键运行（Windows）：双击根目录 `run_qbank.bat`
-5. 或命令行运行：`python qbank_trainer/quiz_app.py`
-
-### DeepSeek Key 配置
-
-推荐使用 `qbank_trainer/.env`：
-
-```
-DEEPSEEK_API_KEY=你的key
+```bash
+flutter pub get
+flutter run        # 在当前设备或模拟器上运行
+# 或指定平台：flutter run -d windows/android/ios/web
 ```
 
-读取优先级：`.env` > 系统环境变量 `DEEPSEEK_API_KEY` > 本地配置文件。
+打包示例：
 
-### 子项目文档
+```bash
+flutter build windows
+flutter build apk
+flutter build web
+```
 
-- `qbank_trainer/README.md`: 背题工具与导入工具说明
-- `qbank_trainer/build_release.ps1`: Powershell 脚本，自动构建并打包 Windows 发行版
-- `PROJECT_PLAN.md`: 本次实现记录与阶段日志
+项目结构：
 
-> 说明：原有学习系统文档（本 README、SKILL.md、translations 与 references 相关说明）均保留不变。
+```
+aws-saa-learning/
+├── lib/                # Dart 源代码
+│   ├── main.dart
+│   ├── app_model.dart
+│   ├── db.dart
+│   └── models.dart
+├── assets/
+│   └── data.db         # 初始题库
+├── pubspec.yaml
+├── README.md
+├── INSTALL.md
+└── …（其他文档与翻译资料）
+```
 
 ## 安装
 
@@ -124,26 +131,17 @@ DEEPSEEK_API_KEY=你的key
 
 ```
 aws-saa-learning/
-├── SKILL.md
+├── lib/                # Dart 源代码
+├── assets/             # 包含初始题库 data.db
+├── pubspec.yaml
 ├── README.md
-├── CHANGELOG.md
+├── INSTALL.md
+├── SKILL.md
 ├── PROJECT_PLAN.md
 ├── ISSUES.md
-├── qbank_trainer/
-│   ├── README.md
-│   ├── quiz_app.py
-│   ├── data.db
-│   └── src/
-├── references/
-│   ├── course-content.md
-│   ├── content-audit.md
-│   ├── why-this-matters.md
-│   └── assignments-guide.md
-├── templates/
-│   ├── progress.md
-│   ├── note-template.md
-│   └── flashcard-template.md
-└── translations/         # 由 _zh.srt 转换的学习材料
+├── translations/       # 课程字幕整理稿
+├── references/         # 附加文档
+└── templates/          # 结构化笔记模板
 ```
 
 ## 许可证

@@ -14,48 +14,40 @@ This document explains how to set up the AWS-SAA Learning Skill and the QBank Tr
 
 No additional dependencies are required for the learning skill itself; it is primarily a collection of markdown and supporting scripts.
 
-## 2. QBank Trainer Tool (题库背题工具)
+## 2. Question Bank Trainer (Flutter)
 
-You can choose between two modes:
+本项目的题库助手已使用 Flutter 重新实现，放在仓库根目录。
+它支持 Windows、macOS、Linux 桌面，Android 手机/平板，以及 Web（可选）。
 
-### 2.1 Standalone Windows Executable (Recommended)
-
-1. Download the latest release `.zip` from GitHub Releases: https://github.com/DodgeHo/aws-saa-learning-skill/releases
-2. Extract the archive; it contains `qbank_trainer.exe` and a sample `data.db`.
-3. Double-click `qbank_trainer.exe` to run. No Python installation is needed.
-
-### 2.2 From Source (Python Required)
-
-1. Ensure Python 3.11+ is installed and available in your PATH.
-2. (Optional) create a virtual environment:
-   ```powershell
-   python -m venv .venv
-   & .venv\Scripts\Activate.ps1
-   ```
-3. Install dependencies:
-   ```bash
-   pip install -r qbank_trainer/requirements.txt
-   pip install -r qbank_trainer/requirements-ui.txt   # for optional UI
-   ```
-4. Run the trainer:
-   ```bash
-   python qbank_trainer/quiz_app.py
-   ```
-
-### 2.3 Importing Question Bank
-
-Use the PDF import script (requires `pypdf` and `requests`):
+### Build & Run
 
 ```bash
-python -m qbank_trainer.src.import_cli \
-  --pdf-zh "题库/AWS认证 SAA-C03 中文真题题库.pdf" \
-  --pdf-en "题库/AWS SAA-C03 英文 1019Q.pdf" \
-  --db "qbank_trainer/data.db"
+# 先安装 Flutter SDK
+git clone https://github.com/DodgeHo/aws-saa-learning-skill.git
+cd aws-saa-learning-skill
+flutter pub get
+flutter run          # 在默认连接的设备或模拟器上运行
+# 指定平台示例：flutter run -d windows/android/ios/web
 ```
+
+应用首次启动时会从 `assets/data.db` 将题库复制到设备的本地数据库目录。
+用户设置、进度和 AI Key 保存在本地 `shared_preferences` 中。
+
+### Packaging
+
+```bash
+flutter build windows   # 生成 Windows 可执行文件
+flutter build macos
+flutter build linux
+flutter build apk       # Android APK
+flutter build web       # Web 应用
+```
+
+构建成果静态放在各自的 `build/` 子目录下，可按需打包分发。
 
 ## 3. Environment Variables
 
-- `DEEPSEEK_API_KEY`: provide an API key for AI assistance.
-- Alternatively place a `.env` file inside `qbank_trainer` with `DEEPSEEK_API_KEY=...`.
+- `DEEPSEEK_API_KEY` 或 `OPENAI_API_KEY`：仅在使用 AI 提问功能时需要。
+  也可以在应用设置页直接输入 API Key。
 
-For more details see `qbank_trainer/README.md`.
+
