@@ -39,7 +39,10 @@
 
 功能概览：
 
-- 启动时从 `assets/data.db` 复制题库到本地 SQLite 数据库。
+- 启动时从 `assets/data.db` 复制题库到本地 SQLite 数据库。（首次运行可在日志中看到复制路径，文件位于
+  `getDatabasesPath()` 返回的位置）
+- 若要更新题库，可用新的 SQLite 文件替换 `assets/data.db` 然后重新 `flutter build`。
+  旧版 release 目录中的 `data.db` 仅用于 Python MVP，不会被 Flutter 项目使用。
 - 按状态筛选题目（All/Know/DontKnow/Favorite），支持随机顺序。
 - 浏览题目、显示答案，记录和查询状态、进度。
 - 题目概览页面可跳转、统计各类题目数量。

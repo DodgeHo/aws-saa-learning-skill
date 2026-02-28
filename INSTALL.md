@@ -30,7 +30,21 @@ flutter run          # 在默认连接的设备或模拟器上运行
 # 指定平台示例：flutter run -d windows/android/ios/web
 ```
 
+> **注意（Windows 桌面）**
+> 
+> 构建/运行 Windows 版本需要
+> 1. 在系统设置中启用 **开发者模式**（符号链接支持）；
+> 2. 安装 **Visual Studio 2022/2023** 并添加 “Desktop development with C++” 工作负载。
+>    `flutter doctor` 会提示缺少此工具链。完成安装后重新运行 `flutter run -d windows`。
+
+
 应用首次启动时会从 `assets/data.db` 将题库复制到设备的本地数据库目录。
+（可在命令行日志看到复制操作，目标路径由 `getDatabasesPath()` 决定，例如
+`C:\Users\<user>\AppData\Local\...`)。
+
+> 如果想使用新的题库，请将替换好的 SQLite 文件重命名为 `assets/data.db`，
+> 然后重新运行或打包应用；旧的本地数据库会被覆盖或手动删除后再次启动。
+
 用户设置、进度和 AI Key 保存在本地 `shared_preferences` 中。
 
 ### Packaging
