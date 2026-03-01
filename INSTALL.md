@@ -28,7 +28,7 @@ cd aws-saa-learning-skill
 flutter pub get
 flutter run          # 在默认连接的设备或模拟器上运行
 # 指定平台示例：flutter run -d windows/android/ios
-# 注意：Web (chrome/edge) 平台目前 **不支持** SQLite，本地题目将无法显示。
+# Web 也支持：flutter run -d chrome
 ```
 
 > **注意（Windows 桌面）**

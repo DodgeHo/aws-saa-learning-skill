@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/services.dart';
 import 'package:sembast/sembast.dart';
-import 'package:sembast/sembast_io.dart';
 import 'package:sembast_web/sembast_web.dart';
 
 // simple web database using sembast; questions are loaded from a JSON asset

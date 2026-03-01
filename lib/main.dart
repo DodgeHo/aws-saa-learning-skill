@@ -40,75 +40,57 @@ class MainScaffold extends StatefulWidget {
 }
 
 class _MainScaffoldState extends State<MainScaffold> {
-  int _selectedIndex = 0;
-
-  void setTab(int idx) {
-    setState(() {
-      _selectedIndex = idx;
-    });
+  void _openProgressDialog() {
+    showDialog(
+      context: context,
+      builder: (_) => Dialog(
+        child: SizedBox(
+          width: 900,
+          height: 640,
+          child: const Padding(
+            padding: EdgeInsets.all(12.0),
+            child: ProgressPage(),
+          ),
+        ),
+      ),
+    );
   }
 
-  final List<Widget> _pages = const [
-    QuizPage(),
-    AiPage(),
-    ProgressPage(),
-    SettingsPage(),
-  ];
+  void _openSettingsDialog() {
+    showDialog(
+      context: context,
+      builder: (_) => Dialog(
+        child: SizedBox(
+          width: 560,
+          height: 520,
+          child: const Padding(
+            padding: EdgeInsets.all(12.0),
+            child: SettingsPage(),
+          ),
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final isWide = constraints.maxWidth > 900;
-        return Scaffold(
-          appBar: AppBar(
-            title: const Text('AWS SAA 题库助手'),
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('AWS SAA 题库助手'),
+        actions: [
+          IconButton(
+            tooltip: '进度',
+            icon: const Icon(Icons.bar_chart_outlined),
+            onPressed: _openProgressDialog,
           ),
-          body: isWide
-              ? Row(
-                  children: [
-                    NavigationRail(
-                      selectedIndex: _selectedIndex,
-                      onDestinationSelected: (idx) => setState(() => _selectedIndex = idx),
-                      labelType: NavigationRailLabelType.all,
-                      destinations: const [
-                        NavigationRailDestination(
-                          icon: Icon(Icons.quiz_outlined),
-                          label: Text('刷题'),
-                        ),
-                        NavigationRailDestination(
-                          icon: Icon(Icons.smart_toy_outlined),
-                          label: Text('AI问答'),
-                        ),
-                        NavigationRailDestination(
-                          icon: Icon(Icons.bar_chart_outlined),
-                          label: Text('进度'),
-                        ),
-                        NavigationRailDestination(
-                          icon: Icon(Icons.settings_outlined),
-                          label: Text('设置'),
-                        ),
-                      ],
-                    ),
-                    const VerticalDivider(width: 1),
-                    Expanded(child: _pages[_selectedIndex]),
-                  ],
-                )
-              : _pages[_selectedIndex],
-          bottomNavigationBar: isWide
-              ? null
-              : BottomNavigationBar(
-                  currentIndex: _selectedIndex,
-                  onTap: (idx) => setState(() => _selectedIndex = idx),
-                  items: const [
-                    BottomNavigationBarItem(icon: Icon(Icons.quiz_outlined), label: '刷题'),
-                    BottomNavigationBarItem(icon: Icon(Icons.smart_toy_outlined), label: 'AI问答'),
-                    BottomNavigationBarItem(icon: Icon(Icons.bar_chart_outlined), label: '进度'),
-                    BottomNavigationBarItem(icon: Icon(Icons.settings_outlined), label: '设置'),
-                  ],
-                ),
-        );
-      },
+          IconButton(
+            tooltip: '设置',
+            icon: const Icon(Icons.settings_outlined),
+            onPressed: _openSettingsDialog,
+          ),
+        ],
+      ),
+      body: const QuizPage(),
     );
   }
 }
@@ -122,120 +104,6 @@ class QuizPage extends StatefulWidget {
 }
 
 class _QuizPageState extends State<QuizPage> {
-  @override
-  Widget build(BuildContext context) {
-    final model = Provider.of<AppModel>(context);
-
-    if (model.webError) {
-      return const Center(
-          child: Padding(
-        padding: EdgeInsets.all(16.0),
-        child: Text(
-          '''当前在 Web 平台上运行，内置 SQLite 数据库不可用。
-请在 Windows/Android/iOS/macOS/Linux 等受支持平台运行此应用。''',
-          textAlign: TextAlign.center,
-        ),
-      ));
-    }
-
-    final q = model.currentQuestion;
-    if (q == null) return const Center(child: Text('没有题目'));
-
-    // filter control
-    final filterOptions = ['All', 'Know', 'DontKnow', 'Favorite'];
-
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            children: [
-              const Text('筛选：'),
-              DropdownButton<String>(
-                value: model.filterMode,
-                items: filterOptions
-                    .map((e) => DropdownMenuItem(value: e, child: Text(e)))
-                    .toList(),
-                onChanged: (v) {
-                  if (v != null) {
-                    model.filterMode = v;
-                    model.saveSettings();
-                    model.loadQuestions();
-                  }
-                },
-              ),
-              const SizedBox(width: 16),
-              const Text('随机'),
-              Checkbox(
-                  value: model.randomOrder,
-                  onChanged: (v) {
-                    model.randomOrder = v ?? false;
-                    model.saveSettings();
-                    model.loadQuestions();
-                  }),
-            ],
-          ),
-          Text('第${model.currentIndex + 1}/${model.questions.length} 题',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontSize: model.fontSize)),
-          if (model.status != null)
-            Text('状态: ${model.status}',
-                style: TextStyle(fontSize: model.fontSize)),
-          const SizedBox(height: 8),
-          Expanded(
-            child: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (q.stemZh != null)
-                    Text('【中文题干】\n${q.stemZh}\n',
-                        style: TextStyle(fontSize: model.fontSize)),
-                  if (q.optionsZh != null)
-                    Text('【中文选项】\n${q.optionsZh!.join('\n')}\n',
-                        style: TextStyle(fontSize: model.fontSize)),
-                  if (q.stemEn != null)
-                    Text('【English Stem】\n${q.stemEn}\n',
-                        style: TextStyle(fontSize: model.fontSize)),
-                  if (q.optionsEn != null)
-                    Text('【English Options】\n${q.optionsEn!.join('\n')}\n',
-                        style: TextStyle(fontSize: model.fontSize)),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              ElevatedButton(onPressed: model.prev, child: const Text('上一题')),
-              ElevatedButton(onPressed: model.next, child: const Text('下一题')),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            children: [
-              ElevatedButton(onPressed: () => model.mark('Know'), child: const Text('会')),
-              ElevatedButton(onPressed: () => model.mark('DontKnow'), child: const Text('不会')),
-              ElevatedButton(onPressed: () => model.mark('Favorite'), child: const Text('收藏')),
-            ],
-          )
-        ],
-      ),
-    );
-  }
-}
-
-// AI问答页
-class AiPage extends StatefulWidget {
-  const AiPage({super.key});
-
-  @override
-  State<AiPage> createState() => _AiPageState();
-}
-
-class _AiPageState extends State<AiPage> {
   final TextEditingController _inputController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   String _output = '';
@@ -247,55 +115,188 @@ class _AiPageState extends State<AiPage> {
     super.dispose();
   }
 
-  void _sendQuestion(String text) {
-    if (text.isEmpty) return;
+  void _sendQuestion(Question q, String text) {
+    final t = text.trim();
+    if (t.isEmpty) return;
     setState(() {
-      _output += '\n[用户] $text\n';
-    });
-    // TODO: send to AI provider using key from settings
-    setState(() {
+      _output += '\n[用户][题号:${q.qNum ?? '-'}] $t\n';
       _output += '[AI] (回答将在此处显示)\n';
     });
     _inputController.clear();
-    _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollController.hasClients) {
+        _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+      }
+    });
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              ElevatedButton(
-                  onPressed: () => _sendQuestion('这题用到了什么知识？'),
-                  child: const Text('知识点')),
-              const SizedBox(width: 8),
-              ElevatedButton(
-                  onPressed: () => _sendQuestion('这道题是什么意思？'),
-                  child: const Text('题意')),
-              const SizedBox(width: 8),
-              ElevatedButton(
-                  onPressed: () => _sendQuestion('为什么是这个结果？'),
-                  child: const Text('解析')),
-            ],
+  Widget _buildAiPanel(Question q) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const Text('AI 提问', style: TextStyle(fontWeight: FontWeight.bold)),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            ElevatedButton(
+              onPressed: () => _sendQuestion(q, '这题用到了什么知识？'),
+              child: const Text('知识点'),
+            ),
+            ElevatedButton(
+              onPressed: () => _sendQuestion(q, '这道题是什么意思？'),
+              child: const Text('题意'),
+            ),
+            ElevatedButton(
+              onPressed: () => _sendQuestion(q, '为什么是这个结果？'),
+              child: const Text('解析'),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        TextField(
+          controller: _inputController,
+          decoration: const InputDecoration(
+            labelText: '自定义问题',
+            hintText: '输入提问后回车',
+            border: OutlineInputBorder(),
           ),
-          TextField(
-            controller: _inputController,
-            decoration: const InputDecoration(
-                labelText: '自定义问题', hintText: '输入提问然后回车'),
-            onSubmitted: _sendQuestion,
-          ),
-          const SizedBox(height: 8),
-          Expanded(
+          onSubmitted: (v) => _sendQuestion(q, v),
+        ),
+        const SizedBox(height: 8),
+        Expanded(
+          child: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.black12),
+              borderRadius: BorderRadius.circular(8),
+            ),
             child: SingleChildScrollView(
               controller: _scrollController,
               child: Text(_output),
             ),
-          )
-        ],
-      ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildQuestionPanel(AppModel model, Question q) {
+    final filterOptions = ['All', 'Know', 'DontKnow', 'Favorite'];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            const Text('筛选：'),
+            DropdownButton<String>(
+              value: model.filterMode,
+              items: filterOptions
+                  .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+                  .toList(),
+              onChanged: (v) {
+                if (v != null) {
+                  model.filterMode = v;
+                  model.saveSettings();
+                  model.loadQuestions();
+                }
+              },
+            ),
+            const SizedBox(width: 16),
+            const Text('随机'),
+            Checkbox(
+              value: model.randomOrder,
+              onChanged: (v) {
+                model.randomOrder = v ?? false;
+                model.saveSettings();
+                model.loadQuestions();
+              },
+            ),
+          ],
+        ),
+        Text(
+          '第${model.currentIndex + 1}/${model.questions.length} 题',
+          style: Theme.of(context)
+              .textTheme
+              .titleMedium
+              ?.copyWith(fontSize: model.fontSize),
+        ),
+        if (model.status != null)
+          Text('状态: ${model.status}', style: TextStyle(fontSize: model.fontSize)),
+        const SizedBox(height: 8),
+        Expanded(
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (q.stemZh != null)
+                  Text('【中文题干】\n${q.stemZh}\n', style: TextStyle(fontSize: model.fontSize)),
+                if (q.optionsZh != null)
+                  Text('【中文选项】\n${q.optionsZh!.join('\n')}\n',
+                      style: TextStyle(fontSize: model.fontSize)),
+                if (q.stemEn != null)
+                  Text('【English Stem】\n${q.stemEn}\n', style: TextStyle(fontSize: model.fontSize)),
+                if (q.optionsEn != null)
+                  Text('【English Options】\n${q.optionsEn!.join('\n')}\n',
+                      style: TextStyle(fontSize: model.fontSize)),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            ElevatedButton(onPressed: model.prev, child: const Text('上一题')),
+            ElevatedButton(onPressed: model.next, child: const Text('下一题')),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          children: [
+            ElevatedButton(onPressed: () => model.mark('Know'), child: const Text('会')),
+            ElevatedButton(onPressed: () => model.mark('DontKnow'), child: const Text('不会')),
+            ElevatedButton(onPressed: () => model.mark('Favorite'), child: const Text('收藏')),
+          ],
+        )
+      ],
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final model = Provider.of<AppModel>(context);
+    final q = model.currentQuestion;
+    if (q == null) return const Center(child: Text('没有题目'));
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final wide = constraints.maxWidth >= 1100;
+        if (wide) {
+          return Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Row(
+              children: [
+                Expanded(flex: 3, child: _buildQuestionPanel(model, q)),
+                const SizedBox(width: 16),
+                Expanded(flex: 2, child: _buildAiPanel(q)),
+              ],
+            ),
+          );
+        }
+        return Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            children: [
+              Expanded(flex: 6, child: _buildQuestionPanel(model, q)),
+              const SizedBox(height: 12),
+              Expanded(flex: 4, child: _buildAiPanel(q)),
+            ],
+          ),
+        );
+      },
     );
   }
 }
@@ -353,14 +354,11 @@ class ProgressPage extends StatelessWidget {
             SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: cross),
         itemCount: model.questions.length,
         itemBuilder: (ctx, idx) {
-          final q = model.questions[idx];
           return InkWell(
             onTap: () {
               model.currentIndex = idx;
               model.loadStatus();
-              // switch to quiz tab if possible
-              final parent = context.findAncestorStateOfType<_MainScaffoldState>();
-              if (parent != null) parent.setTab(0);
+              Navigator.of(context).pop();
             },
             child: Container(
               margin: const EdgeInsets.all(2),
@@ -405,11 +403,15 @@ class _SettingsPageState extends State<SettingsPage> {
     // filter and order already stored when changed
     await model.saveSettings();
     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('保存成功')));
+    if (mounted) {
+      Navigator.of(context).pop();
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
+    return SingleChildScrollView(
+      child: Padding(
       padding: const EdgeInsets.all(16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -469,6 +471,7 @@ class _SettingsPageState extends State<SettingsPage> {
           ElevatedButton(onPressed: _savePrefs, child: const Text('保存'))
         ],
       ),
+    ),
     );
   }
 }

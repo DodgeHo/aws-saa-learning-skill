@@ -34,7 +34,8 @@
 ## Flutter 题库助手 (跨平台)
 
 本仓库已移除旧的 Python/Tkinter 实现，所有功能已迁移到 Flutter。
-生成的应用支持 Windows、macOS、Linux 桌面，以及 Android 手机/平板（Web 仅用于演示，当前不支持读写 SQLite）。
+生成的应用支持 Windows、macOS、Linux 桌面、Android 手机/平板以及 Web。
+Web 端使用 `assets/questions.json` + `sembast` (IndexedDB) 存储，不依赖 `sqflite`。
 界面采用响应式布局：宽屏时使用侧边 NavigationRail，窄屏时自动切换到底部导航，兼容键鼠与触屏。
 
 功能概览：
