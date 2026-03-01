@@ -5,9 +5,11 @@ import 'db.dart';
 import 'models.dart';
 
 class AppModel extends ChangeNotifier {
+  List<Question> allQuestions = [];
   List<Question> questions = [];
   int currentIndex = 0;
-  String? status;
+  Map<int, String> statusByQuestionId = {};
+  bool answerVisible = false;
 
   // web-specific flag when DB can't be opened
   bool webError = false;
@@ -74,10 +76,8 @@ class AppModel extends ChangeNotifier {
 
   Future<void> loadQuestions() async {
     try {
-      String? dbFilter;
-      if (filterMode != 'All') dbFilter = filterMode;
-      final rows = await AppDatabase.fetchQuestions(filterStatus: dbFilter);
-      questions = rows
+      final rows = await AppDatabase.fetchQuestions();
+      allQuestions = rows
           .map((r) => Question.fromMap(r))
           .where((q) {
             final qNum = int.tryParse((q.qNum ?? '').trim());
@@ -85,34 +85,45 @@ class AppModel extends ChangeNotifier {
           })
           .toList();
 
-      // keep deterministic order for non-random mode
-      questions.sort((a, b) {
+      allQuestions.sort((a, b) {
         final qa = int.tryParse((a.qNum ?? '').trim()) ?? 1 << 30;
         final qb = int.tryParse((b.qNum ?? '').trim()) ?? 1 << 30;
         return qa.compareTo(qb);
       });
 
-      if (randomOrder) {
-        questions.shuffle();
+      statusByQuestionId = await AppDatabase.getLatestStatuses();
+
+      _applyFilterAndRandom();
+      if (questions.isEmpty) {
+        currentIndex = 0;
+      } else if (currentIndex >= questions.length) {
+        currentIndex = questions.length - 1;
       }
-      currentIndex = 0;
-      await loadStatus();
+
       webError = false;
     } on UnsupportedError catch (_) {
-      // edge case when running on web platform
+      allQuestions = [];
       questions = [];
       webError = true;
     } catch (e) {
+      allQuestions = [];
       questions = [];
       debugPrint('loadQuestions failed: $e');
     }
     notifyListeners();
   }
 
-  Future<void> loadStatus() async {
-    if (questions.isEmpty) return;
-    status = await AppDatabase.getStatus(currentQuestion!.id);
-    notifyListeners();
+  void _applyFilterAndRandom() {
+    final filtered = allQuestions.where((q) {
+      if (filterMode == 'All') return true;
+      return statusByQuestionId[q.id] == filterMode;
+    }).toList();
+
+    if (randomOrder) {
+      filtered.shuffle();
+    }
+    questions = filtered;
+    answerVisible = false;
   }
 
   Question? get currentQuestion {
@@ -121,10 +132,16 @@ class AppModel extends ChangeNotifier {
     return questions[currentIndex];
   }
 
+  String? get currentStatus {
+    final q = currentQuestion;
+    if (q == null) return null;
+    return statusByQuestionId[q.id];
+  }
+
   void next() {
     if (currentIndex < questions.length - 1) {
       currentIndex++;
-      loadStatus();
+      answerVisible = false;
       notifyListeners();
     }
   }
@@ -132,19 +149,86 @@ class AppModel extends ChangeNotifier {
   void prev() {
     if (currentIndex > 0) {
       currentIndex--;
-      loadStatus();
+      answerVisible = false;
       notifyListeners();
     }
   }
 
   Future<void> mark(String st) async {
     if (currentQuestion == null) return;
-    await AppDatabase.setStatus(currentQuestion!.id, st);
-    await loadStatus();
+    final questionId = currentQuestion!.id;
+    await AppDatabase.setStatus(questionId, st);
+    statusByQuestionId[questionId] = st;
+
     if (filterMode != 'All') {
-      // reload questions to reflect filter
-      await loadQuestions();
+      final currentId = questionId;
+      _applyFilterAndRandom();
+      if (questions.isEmpty) {
+        currentIndex = 0;
+      } else {
+        final idx = questions.indexWhere((q) => q.id == currentId);
+        currentIndex = idx >= 0 ? idx : 0;
+      }
     }
+    notifyListeners();
+  }
+
+  Future<void> setFilterMode(String mode) async {
+    filterMode = mode;
+    await saveSettings();
+    _applyFilterAndRandom();
+    currentIndex = 0;
+    notifyListeners();
+  }
+
+  Future<void> setRandomOrder(bool value) async {
+    randomOrder = value;
+    await saveSettings();
+    _applyFilterAndRandom();
+    currentIndex = 0;
+    notifyListeners();
+  }
+
+  void jumpToDisplayIndex(int index) {
+    if (index < 0 || index >= questions.length) return;
+    currentIndex = index;
+    answerVisible = false;
+    notifyListeners();
+  }
+
+  bool jumpToNumber(int oneBasedNumber) {
+    final idx = oneBasedNumber - 1;
+    if (idx < 0 || idx >= questions.length) return false;
+    currentIndex = idx;
+    answerVisible = false;
+    notifyListeners();
+    return true;
+  }
+
+  Future<void> jumpToQuestionIdFromOverview(int questionId) async {
+    if (filterMode != 'All') {
+      filterMode = 'All';
+      await saveSettings();
+      _applyFilterAndRandom();
+    }
+    final idx = questions.indexWhere((q) => q.id == questionId);
+    if (idx >= 0) {
+      currentIndex = idx;
+      answerVisible = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> clearProgress() async {
+    await AppDatabase.clearStatuses();
+    statusByQuestionId = {};
+    _applyFilterAndRandom();
+    currentIndex = 0;
+    notifyListeners();
+  }
+
+  void showAnswer() {
+    answerVisible = true;
     notifyListeners();
   }
 }

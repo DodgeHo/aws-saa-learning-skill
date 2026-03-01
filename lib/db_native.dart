@@ -132,6 +132,34 @@ class AppDatabase {
     });
   }
 
+  static Future<void> clearStatuses() async {
+    final db = await getInstance();
+    await db.delete('user_status');
+  }
+
+  static Future<Map<int, String>> getLatestStatuses() async {
+    final db = await getInstance();
+    final rows = await db.rawQuery('''
+      SELECT us.question_id, us.status
+      FROM user_status us
+      INNER JOIN (
+        SELECT question_id, MAX(rowid) AS max_rowid
+        FROM user_status
+        GROUP BY question_id
+      ) latest ON latest.max_rowid = us.rowid
+    ''');
+
+    final map = <int, String>{};
+    for (final row in rows) {
+      final qid = row['question_id'];
+      final status = row['status'];
+      if (qid is int && status is String) {
+        map[qid] = status;
+      }
+    }
+    return map;
+  }
+
   /// return a map of status->count for all existing entries
   static Future<Map<String,int>> countByStatus() async {
     final db = await getInstance();

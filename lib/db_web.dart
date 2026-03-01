@@ -71,6 +71,26 @@ class AppDatabase {
     await _statusStore.add(db, {'question_id': questionId, 'status': status, 'timestamp': DateTime.now().toIso8601String()});
   }
 
+  static Future<void> clearStatuses() async {
+    final db = await getInstance();
+    await _statusStore.drop(db);
+  }
+
+  static Future<Map<int, String>> getLatestStatuses() async {
+    final db = await getInstance();
+    final recs = await _statusStore.find(db);
+    final map = <int, String>{};
+    for (final record in recs) {
+      final value = record.value;
+      final qid = value['question_id'];
+      final status = value['status'];
+      if (qid is int && status is String) {
+        map[qid] = status;
+      }
+    }
+    return map;
+  }
+
   /// status counts
   static Future<Map<String,int>> countByStatus() async {
     final db = await getInstance();

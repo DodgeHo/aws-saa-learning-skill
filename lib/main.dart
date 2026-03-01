@@ -106,13 +106,35 @@ class QuizPage extends StatefulWidget {
 class _QuizPageState extends State<QuizPage> {
   final TextEditingController _inputController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+  final TextEditingController _jumpController = TextEditingController();
   String _output = '';
   bool _askingAi = false;
+
+  static const Map<String, String> _filterDisplayToMode = {
+    '所有': 'All',
+    '会': 'Know',
+    '不会': 'DontKnow',
+    '收藏': 'Favorite',
+  };
+
+  static const Map<String, String> _filterModeToDisplay = {
+    'All': '所有',
+    'Know': '会',
+    'DontKnow': '不会',
+    'Favorite': '收藏',
+  };
+
+  static const Map<String, String> _statusDisplay = {
+    'Know': '会',
+    'DontKnow': '不会',
+    'Favorite': '收藏 ★',
+  };
 
   @override
   void dispose() {
     _inputController.dispose();
     _scrollController.dispose();
+    _jumpController.dispose();
     super.dispose();
   }
 
@@ -193,6 +215,9 @@ $enOptions
   }
 
   Widget _buildAiPanel(AppModel model, Question q) {
+    final hasKey = model.apiKey.trim().isNotEmpty;
+    final canAsk = hasKey && !_askingAi;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -203,22 +228,31 @@ $enOptions
             Text('提供者: ${model.aiProvider}', style: const TextStyle(fontSize: 12)),
           ],
         ),
+        if (!hasKey)
+          const Padding(
+            padding: EdgeInsets.only(top: 4, bottom: 6),
+            child: Text('请先在设置中填写 API Key 后再使用 AI 提问。', style: TextStyle(color: Colors.red)),
+          ),
         const SizedBox(height: 8),
         Wrap(
           spacing: 8,
           runSpacing: 8,
           children: [
             ElevatedButton(
-              onPressed: _askingAi ? null : () => _sendQuestion(model, q, '这题用到了什么知识？'),
+              onPressed: canAsk ? () => _sendQuestion(model, q, '这题用到了什么知识？') : null,
               child: const Text('知识点'),
             ),
             ElevatedButton(
-              onPressed: _askingAi ? null : () => _sendQuestion(model, q, '这道题是什么意思？'),
+              onPressed: canAsk ? () => _sendQuestion(model, q, '这道题是什么意思？') : null,
               child: const Text('题意'),
             ),
             ElevatedButton(
-              onPressed: _askingAi ? null : () => _sendQuestion(model, q, '为什么是这个结果？'),
+              onPressed: canAsk ? () => _sendQuestion(model, q, '为什么是这个结果？') : null,
               child: const Text('解析'),
+            ),
+            ElevatedButton(
+              onPressed: canAsk ? () => _sendQuestion(model, q, '我没看懂，能更简单吗？') : null,
+              child: const Text('更简单'),
             ),
           ],
         ),
@@ -230,11 +264,23 @@ $enOptions
             hintText: '输入提问后回车',
             border: OutlineInputBorder(),
           ),
+          enabled: hasKey,
           onSubmitted: (v) => _sendQuestion(model, q, v),
         ),
         const SizedBox(height: 8),
         if (_askingAi) const LinearProgressIndicator(),
         if (_askingAi) const SizedBox(height: 8),
+        Align(
+          alignment: Alignment.centerRight,
+          child: TextButton(
+            onPressed: () {
+              setState(() {
+                _output = '';
+              });
+            },
+            child: const Text('清空历史'),
+          ),
+        ),
         Expanded(
           child: Container(
             padding: const EdgeInsets.all(8),
@@ -253,7 +299,11 @@ $enOptions
   }
 
   Widget _buildQuestionPanel(AppModel model, Question q) {
-    final filterOptions = ['All', 'Know', 'DontKnow', 'Favorite'];
+    final displayFilter = _filterModeToDisplay[model.filterMode] ?? '所有';
+    final statusText = _statusDisplay[model.currentStatus] ?? '未标记';
+    final answerText =
+        '正确答案：${q.correctAnswer ?? '(空)'}\n\n中文解析：\n${q.explanationZh ?? '(空)'}\n\nEnglish Explanation:\n${q.explanationEn ?? '(empty)'}';
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -261,15 +311,14 @@ $enOptions
           children: [
             const Text('筛选：'),
             DropdownButton<String>(
-              value: model.filterMode,
-              items: filterOptions
+              value: displayFilter,
+              items: _filterDisplayToMode.keys
                   .map((e) => DropdownMenuItem(value: e, child: Text(e)))
                   .toList(),
               onChanged: (v) {
                 if (v != null) {
-                  model.filterMode = v;
-                  model.saveSettings();
-                  model.loadQuestions();
+                  final mode = _filterDisplayToMode[v] ?? 'All';
+                  model.setFilterMode(mode);
                 }
               },
             ),
@@ -278,19 +327,39 @@ $enOptions
             Checkbox(
               value: model.randomOrder,
               onChanged: (v) {
-                model.randomOrder = v ?? false;
-                model.saveSettings();
-                model.loadQuestions();
+                model.setRandomOrder(v ?? false);
               },
+            ),
+            const SizedBox(width: 12),
+            SizedBox(
+              width: 72,
+              child: TextField(
+                controller: _jumpController,
+                decoration: const InputDecoration(
+                  hintText: '题号',
+                  isDense: true,
+                ),
+                keyboardType: TextInputType.number,
+                onSubmitted: (_) => _handleJump(model),
+              ),
+            ),
+            const SizedBox(width: 6),
+            OutlinedButton(
+              onPressed: () => _handleJump(model),
+              child: const Text('跳转'),
+            ),
+            const SizedBox(width: 6),
+            OutlinedButton(
+              onPressed: () => _confirmClearProgress(model),
+              child: const Text('清空刷题记录'),
             ),
           ],
         ),
         Text(
-          '第${model.currentIndex + 1}/${model.questions.length} 题',
+          '第${model.currentIndex + 1}/${model.questions.length} 题 | 题号为${q.qNum ?? '-'}',
           style: Theme.of(context).textTheme.titleMedium?.copyWith(fontSize: model.fontSize),
         ),
-        if (model.status != null)
-          Text('状态: ${model.status}', style: TextStyle(fontSize: model.fontSize)),
+        Text('状态：$statusText', style: TextStyle(fontSize: model.fontSize)),
         const SizedBox(height: 8),
         Expanded(
           child: SingleChildScrollView(
@@ -323,13 +392,72 @@ $enOptions
         Wrap(
           spacing: 8,
           children: [
+            ElevatedButton(onPressed: model.showAnswer, child: const Text('答案')),
             ElevatedButton(onPressed: () => model.mark('Know'), child: const Text('会')),
             ElevatedButton(onPressed: () => model.mark('DontKnow'), child: const Text('不会')),
             ElevatedButton(onPressed: () => model.mark('Favorite'), child: const Text('收藏')),
           ],
         ),
+        const SizedBox(height: 8),
+        if (model.answerVisible)
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.black12),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text(answerText, style: TextStyle(fontSize: model.fontSize - 1)),
+          ),
       ],
     );
+  }
+
+  void _handleJump(AppModel model) {
+    final raw = _jumpController.text.trim();
+    final num = int.tryParse(raw);
+    if (num == null) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('请输入有效题号')));
+      return;
+    }
+    final ok = model.jumpToNumber(num);
+    if (!ok) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('题号超出范围')));
+      return;
+    }
+    _jumpController.clear();
+  }
+
+  Future<void> _confirmClearProgress(AppModel model) async {
+    final yes1 = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('确认'),
+        content: const Text('此操作将清除所有刷题记录，无法恢复。继续？'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('取消')),
+          ElevatedButton(onPressed: () => Navigator.pop(context, true), child: const Text('继续')),
+        ],
+      ),
+    );
+    if (yes1 != true) return;
+    if (!mounted) return;
+
+    final yes2 = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('再确认'),
+        content: const Text('真的确定要清除所有记录吗？'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('取消')),
+          ElevatedButton(onPressed: () => Navigator.pop(context, true), child: const Text('确定')),
+        ],
+      ),
+    );
+    if (yes2 != true) return;
+
+    await model.clearProgress();
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('刷题记录已清空')));
   }
 
   @override
@@ -375,7 +503,7 @@ class ProgressPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final model = Provider.of<AppModel>(context);
-    final total = model.questions.length;
+    final total = model.allQuestions.length;
 
     return FutureBuilder<Map<String, int>>(
       future: _computeStats(),
@@ -415,19 +543,27 @@ class ProgressPage extends StatelessWidget {
         final cross = (cons.maxWidth / 80).floor().clamp(4, 20);
         return GridView.builder(
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: cross),
-          itemCount: model.questions.length,
+          itemCount: model.allQuestions.length,
           itemBuilder: (ctx, idx) {
+            final q = model.allQuestions[idx];
+            final status = model.statusByQuestionId[q.id];
+            Color bg = Colors.grey.shade300;
+            if (status == 'Know') bg = Colors.green.shade400;
+            if (status == 'DontKnow') bg = Colors.red.shade400;
+            if (status == 'Favorite') bg = Colors.yellow.shade600;
+
             return InkWell(
-              onTap: () {
-                model.currentIndex = idx;
-                model.loadStatus();
-                Navigator.of(context).pop();
+              onTap: () async {
+                await model.jumpToQuestionIdFromOverview(q.id);
+                if (context.mounted) {
+                  Navigator.of(context).pop();
+                }
               },
               child: Container(
                 margin: const EdgeInsets.all(2),
                 alignment: Alignment.center,
-                color: Colors.grey.shade200,
-                child: Text('${idx + 1}'),
+                color: bg,
+                child: Text('${idx + 1}${status == 'Favorite' ? ' ★' : ''}'),
               ),
             );
           },
