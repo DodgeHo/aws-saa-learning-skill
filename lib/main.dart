@@ -310,17 +310,14 @@ class ProgressPage extends StatelessWidget {
     final model = Provider.of<AppModel>(context);
     final total = model.questions.length;
     int know = 0, dont = 0, fav = 0;
-    for (var q in model.questions) {
-      // naive count by querying status synchronously is hard; instead fetch all statuses
-    }
 
-    return FutureBuilder<void>(
+    return FutureBuilder<Map<String, int>>(
       future: _computeStats(),
       builder: (ctx, snap) {
         if (snap.connectionState != ConnectionState.done) {
           return const Center(child: CircularProgressIndicator());
         }
-        final stats = snap.data as Map<String, int>?;
+        final stats = snap.data;
         know = stats?['Know'] ?? 0;
         dont = stats?['DontKnow'] ?? 0;
         fav = stats?['Favorite'] ?? 0;
@@ -397,15 +394,15 @@ class _SettingsPageState extends State<SettingsPage> {
 
   Future<void> _savePrefs() async {
     final model = Provider.of<AppModel>(context, listen: false);
+    final messenger = ScaffoldMessenger.of(context);
     model.aiProvider = _provider;
     model.apiKey = _keyController.text;
     model.fontSize = _fontSize;
     // filter and order already stored when changed
     await model.saveSettings();
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('保存成功')));
-    if (mounted) {
-      Navigator.of(context).pop();
-    }
+    if (!mounted) return;
+    messenger.showSnackBar(const SnackBar(content: Text('保存成功')));
+    Navigator.of(context).pop();
   }
 
   @override
