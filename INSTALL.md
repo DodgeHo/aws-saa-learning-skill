@@ -27,7 +27,8 @@ git clone https://github.com/DodgeHo/aws-saa-learning-skill.git
 cd aws-saa-learning-skill
 flutter pub get
 flutter run          # 在默认连接的设备或模拟器上运行
-# 指定平台示例：flutter run -d windows/android/ios/web
+# 指定平台示例：flutter run -d windows/android/ios
+# 注意：Web (chrome/edge) 平台目前 **不支持** SQLite，本地题目将无法显示。
 ```
 
 > **注意（Windows 桌面）**
@@ -44,6 +45,12 @@ flutter run          # 在默认连接的设备或模拟器上运行
 
 > 如果想使用新的题库，请将替换好的 SQLite 文件重命名为 `assets/data.db`，
 > 然后重新运行或打包应用；旧的本地数据库会被覆盖或手动删除后再次启动。
+> 
+> 对于 Web 需要额外生成 JSON 版本：
+> ```bash
+> py scripts/export_questions_to_json.py
+> ```
+> 该命令会写入或更新 `assets/questions.json`，用于 Web 模式的初始数据。
 
 用户设置、进度和 AI Key 保存在本地 `shared_preferences` 中。
 

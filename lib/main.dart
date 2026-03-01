@@ -125,6 +125,19 @@ class _QuizPageState extends State<QuizPage> {
   @override
   Widget build(BuildContext context) {
     final model = Provider.of<AppModel>(context);
+
+    if (model.webError) {
+      return const Center(
+          child: Padding(
+        padding: EdgeInsets.all(16.0),
+        child: Text(
+          '''当前在 Web 平台上运行，内置 SQLite 数据库不可用。
+请在 Windows/Android/iOS/macOS/Linux 等受支持平台运行此应用。''',
+          textAlign: TextAlign.center,
+        ),
+      ));
+    }
+
     final q = model.currentQuestion;
     if (q == null) return const Center(child: Text('没有题目'));
 
@@ -328,13 +341,8 @@ class ProgressPage extends StatelessWidget {
   }
 
   Future<Map<String, int>> _computeStats() async {
-    final db = await AppDatabase.getInstance();
-    final rows = await db.rawQuery('SELECT status,COUNT(*) as c FROM user_status GROUP BY status');
-    final Map<String, int> map = {};
-    for (var row in rows) {
-      map[row['status'] as String] = row['c'] as int;
-    }
-    return map;
+    // delegate to AppDatabase platform implementation
+    return await AppDatabase.countByStatus();
   }
 
   Widget _buildOverviewGrid(BuildContext context, AppModel model) {

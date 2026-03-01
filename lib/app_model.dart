@@ -9,6 +9,9 @@ class AppModel extends ChangeNotifier {
   int currentIndex = 0;
   String? status;
 
+  // web-specific flag when DB can't be opened
+  bool webError = false;
+
   // settings
   String aiProvider = 'deepseek';
   String apiKey = '';
@@ -37,15 +40,25 @@ class AppModel extends ChangeNotifier {
   }
 
   Future<void> loadQuestions() async {
-    String? dbFilter;
-    if (filterMode != 'All') dbFilter = filterMode;
-    final rows = await AppDatabase.fetchQuestions(filterStatus: dbFilter);
-    questions = rows.map((r) => Question.fromMap(r)).toList();
-    if (randomOrder) {
-      questions.shuffle();
+    try {
+      String? dbFilter;
+      if (filterMode != 'All') dbFilter = filterMode;
+      final rows = await AppDatabase.fetchQuestions(filterStatus: dbFilter);
+      questions = rows.map((r) => Question.fromMap(r)).toList();
+      if (randomOrder) {
+        questions.shuffle();
+      }
+      currentIndex = 0;
+      await loadStatus();
+      webError = false;
+    } on UnsupportedError catch (_) {
+      // edge case when running on web platform
+      questions = [];
+      webError = true;
+    } catch (e) {
+      questions = [];
+      debugPrint('loadQuestions failed: $e');
     }
-    currentIndex = 0;
-    await loadStatus();
     notifyListeners();
   }
 
