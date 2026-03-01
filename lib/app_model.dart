@@ -60,7 +60,21 @@ class AppModel extends ChangeNotifier {
       String? dbFilter;
       if (filterMode != 'All') dbFilter = filterMode;
       final rows = await AppDatabase.fetchQuestions(filterStatus: dbFilter);
-      questions = rows.map((r) => Question.fromMap(r)).toList();
+      questions = rows
+          .map((r) => Question.fromMap(r))
+          .where((q) {
+            final qNum = int.tryParse((q.qNum ?? '').trim());
+            return qNum != null && qNum > 0;
+          })
+          .toList();
+
+      // keep deterministic order for non-random mode
+      questions.sort((a, b) {
+        final qa = int.tryParse((a.qNum ?? '').trim()) ?? 1 << 30;
+        final qb = int.tryParse((b.qNum ?? '').trim()) ?? 1 << 30;
+        return qa.compareTo(qb);
+      });
+
       if (randomOrder) {
         questions.shuffle();
       }

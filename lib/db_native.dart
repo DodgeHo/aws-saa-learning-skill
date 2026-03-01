@@ -5,6 +5,7 @@ import 'package:sqflite/sqflite.dart';
 
 class AppDatabase {
   static Database? _db;
+  static const String _dbAssetVersion = '2026-03-01-zh-fix-v1';
 
   static Future<Database> getInstance() async {
     if (_db != null) return _db!;
@@ -18,6 +19,28 @@ class AppDatabase {
     }
 
     _db = await openDatabase(path);
+    await _ensureRuntimeTables(_db!);
+
+    final needsRepair = await _needsNativeRepair(_db!);
+    if (needsRepair) {
+      final statusRows = await _db!.query('user_status');
+      await _db!.close();
+      _db = null;
+
+      if (await File(path).exists()) {
+        await File(path).delete();
+      }
+      await _copyAssetDb(path);
+
+      _db = await openDatabase(path);
+      await _ensureRuntimeTables(_db!);
+
+      for (final row in statusRows) {
+        await _db!.insert('user_status', row);
+      }
+    }
+
+    await _markDbVersion(_db!);
     return _db!;
   }
 
@@ -25,6 +48,52 @@ class AppDatabase {
     final data = await rootBundle.load('assets/data.db');
     final bytes = data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);
     await File(path).writeAsBytes(bytes, flush: true);
+  }
+
+  static Future<void> _ensureRuntimeTables(Database db) async {
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS user_status (
+        question_id INTEGER,
+        status TEXT,
+        updated_at TEXT
+      )
+    ''');
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS app_meta (
+        key TEXT PRIMARY KEY,
+        value TEXT
+      )
+    ''');
+  }
+
+  static Future<void> _markDbVersion(Database db) async {
+    await db.insert(
+      'app_meta',
+      {'key': 'db_asset_version', 'value': _dbAssetVersion},
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  static Future<bool> _needsNativeRepair(Database db) async {
+    final versionRow = await db.query(
+      'app_meta',
+      columns: ['value'],
+      where: 'key = ?',
+      whereArgs: ['db_asset_version'],
+      limit: 1,
+    );
+    final currentVersion = versionRow.isNotEmpty ? versionRow.first['value'] as String? : null;
+    if (currentVersion != null && currentVersion == _dbAssetVersion) {
+      return false;
+    }
+
+    final row = await db.rawQuery(
+      "SELECT stem_zh FROM questions WHERE stem_zh IS NOT NULL LIMIT 1",
+    );
+    if (row.isEmpty) return false;
+    final sample = (row.first['stem_zh'] as String?) ?? '';
+
+    return sample.contains('�') || sample.contains('һ�') || sample.contains('��');
   }
 
   // questions

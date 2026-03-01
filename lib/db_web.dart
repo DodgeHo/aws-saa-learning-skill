@@ -5,20 +5,35 @@ import 'package:sembast_web/sembast_web.dart';
 // simple web database using sembast; questions are loaded from a JSON asset
 class AppDatabase {
   static Database? _db;
+  static const String _dbAssetVersion = '2026-03-01-zh-fix-v1';
   static final _questionStore = stringMapStoreFactory.store('questions');
   static final _statusStore = intMapStoreFactory.store('user_status');
+  static final _metaStore = stringMapStoreFactory.store('meta');
 
   static Future<Database> getInstance() async {
     if (_db != null) return _db!;
 
     // open sembast database; on web it uses IndexedDB automatically
     _db = await databaseFactoryWeb.openDatabase('aws_saa_trainer.db');
-    // load questions if empty
+
+    final version = await _metaStore.record('questions_version').get(_db!) as Map<String, dynamic>?;
+    final currentVersion = version?['value'] as String?;
+
     final count = await _questionStore.count(_db!);
-    if (count == 0) {
+    final needsRepair = await _needsWebRepair();
+    if (count == 0 || currentVersion != _dbAssetVersion || needsRepair) {
+      await _questionStore.drop(_db!);
       await _importQuestionsFromJson();
+      await _metaStore.record('questions_version').put(_db!, {'value': _dbAssetVersion});
     }
     return _db!;
+  }
+
+  static Future<bool> _needsWebRepair() async {
+    final sample = await _questionStore.findFirst(_db!, finder: Finder(limit: 1));
+    if (sample == null) return false;
+    final stem = (sample['stem_zh'] as String?) ?? '';
+    return stem.contains('�') || stem.contains('һ�') || stem.contains('��');
   }
 
   static Future<void> _importQuestionsFromJson() async {
