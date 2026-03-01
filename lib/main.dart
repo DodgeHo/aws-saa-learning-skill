@@ -496,13 +496,13 @@ class _SettingsPageState extends State<SettingsPage> {
     final model = Provider.of<AppModel>(context, listen: false);
     final messenger = ScaffoldMessenger.of(context);
 
-    model.aiProvider = _provider;
-    model.aiModel = _model.trim().isEmpty ? _defaultModelFor(_provider) : _model.trim();
-    model.aiBaseUrl = _baseUrlController.text.trim();
-    model.apiKey = _keyController.text.trim();
-    model.fontSize = _fontSize;
-
-    await model.saveSettings();
+    await model.applySettings(
+      provider: _provider,
+      key: _keyController.text.trim(),
+      model: _model.trim().isEmpty ? _defaultModelFor(_provider) : _model.trim(),
+      baseUrl: _baseUrlController.text.trim(),
+      font: _fontSize,
+    );
     if (!mounted) return;
     messenger.showSnackBar(const SnackBar(content: Text('保存成功')));
     Navigator.of(context).pop();
@@ -567,6 +567,19 @@ class _SettingsPageState extends State<SettingsPage> {
               divisions: 16,
               label: _fontSize.toStringAsFixed(0),
               onChanged: (v) => setState(() => _fontSize = v),
+            ),
+            Container(
+              width: double.infinity,
+              margin: const EdgeInsets.only(top: 4, bottom: 8),
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.black12),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                '字体预览：这是一道 AWS SAA 题目的示例文本（EC2 / S3 / IAM）',
+                style: TextStyle(fontSize: _fontSize),
+              ),
             ),
             const SizedBox(height: 8),
             const Text('默认筛选'),

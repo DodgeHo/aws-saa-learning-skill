@@ -45,6 +45,23 @@ class AppModel extends ChangeNotifier {
     await prefs.setBool('random_order', randomOrder);
   }
 
+  Future<void> applySettings({
+    required String provider,
+    required String key,
+    required String model,
+    required String baseUrl,
+    required double font,
+  }) async {
+    aiProvider = provider;
+    apiKey = key;
+    aiModel = model;
+    aiBaseUrl = baseUrl;
+    fontSize = font;
+
+    await saveSettings();
+    notifyListeners();
+  }
+
   String _defaultModelFor(String provider) {
     switch (provider.trim().toLowerCase()) {
       case 'openai':
