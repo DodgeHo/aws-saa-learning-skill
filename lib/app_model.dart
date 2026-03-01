@@ -15,6 +15,8 @@ class AppModel extends ChangeNotifier {
   // settings
   String aiProvider = 'deepseek';
   String apiKey = '';
+  String aiModel = 'deepseek-chat';
+  String aiBaseUrl = '';
   double fontSize = 11;
 
   String filterMode = 'All';
@@ -24,6 +26,8 @@ class AppModel extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     aiProvider = prefs.getString('ai_provider') ?? 'deepseek';
     apiKey = prefs.getString('api_key') ?? '';
+    aiModel = prefs.getString('ai_model') ?? _defaultModelFor(aiProvider);
+    aiBaseUrl = prefs.getString('ai_base_url') ?? '';
     fontSize = prefs.getDouble('font_size') ?? 11;
     filterMode = prefs.getString('filter_mode') ?? 'All';
     randomOrder = prefs.getBool('random_order') ?? false;
@@ -34,9 +38,21 @@ class AppModel extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('ai_provider', aiProvider);
     await prefs.setString('api_key', apiKey);
+    await prefs.setString('ai_model', aiModel);
+    await prefs.setString('ai_base_url', aiBaseUrl);
     await prefs.setDouble('font_size', fontSize);
     await prefs.setString('filter_mode', filterMode);
     await prefs.setBool('random_order', randomOrder);
+  }
+
+  String _defaultModelFor(String provider) {
+    switch (provider.trim().toLowerCase()) {
+      case 'openai':
+        return 'gpt-4o-mini';
+      case 'deepseek':
+      default:
+        return 'deepseek-chat';
+    }
   }
 
   Future<void> loadQuestions() async {
