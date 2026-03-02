@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'db.dart';
 import 'models.dart';
 
 class AppModel extends ChangeNotifier {
+  static const String _secureProviderKeysKey = 'provider_keys_secure';
+  static const FlutterSecureStorage _secureStorage = FlutterSecureStorage();
+
   List<Question> allQuestions = [];
   List<Question> questions = [];
   int currentIndex = 0;
@@ -30,23 +34,34 @@ class AppModel extends ChangeNotifier {
   Future<void> loadSettings() async {
     final prefs = await SharedPreferences.getInstance();
     aiProvider = prefs.getString('ai_provider') ?? 'deepseek';
-    final providerKeysRaw = prefs.getString('provider_keys');
-    providerKeys = {};
-    if (providerKeysRaw != null && providerKeysRaw.trim().isNotEmpty) {
-      try {
-        final decoded = jsonDecode(providerKeysRaw);
-        if (decoded is Map) {
-          providerKeys = decoded.map((k, v) => MapEntry(k.toString(), (v ?? '').toString()));
-        }
-      } catch (_) {}
-    }
+    providerKeys = await _readProviderKeysSecure();
 
     if (providerKeys.isEmpty) {
-      final legacy = prefs.getString('api_key') ?? '';
-      if (legacy.trim().isNotEmpty) {
-        providerKeys['deepseek'] = legacy.trim();
+      final providerKeysRaw = prefs.getString('provider_keys');
+      if (providerKeysRaw != null && providerKeysRaw.trim().isNotEmpty) {
+        try {
+          final decoded = jsonDecode(providerKeysRaw);
+          if (decoded is Map) {
+            providerKeys = decoded.map((k, v) => MapEntry(k.toString(), (v ?? '').toString()));
+          }
+        } catch (_) {}
+      }
+
+      if (providerKeys.isEmpty) {
+        final legacy = prefs.getString('api_key') ?? '';
+        if (legacy.trim().isNotEmpty) {
+          providerKeys['deepseek'] = legacy.trim();
+        }
+      }
+
+      if (providerKeys.isNotEmpty) {
+        await _writeProviderKeysSecure(providerKeys);
       }
     }
+
+    await prefs.remove('provider_keys');
+    await prefs.remove('api_key');
+
     apiKey = providerKeys[aiProvider] ?? '';
     aiModel = prefs.getString('ai_model') ?? _defaultModelFor(aiProvider);
     aiBaseUrl = prefs.getString('ai_base_url') ?? '';
@@ -59,8 +74,9 @@ class AppModel extends ChangeNotifier {
   Future<void> saveSettings() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('ai_provider', aiProvider);
-    await prefs.setString('provider_keys', jsonEncode(providerKeys));
-    await prefs.setString('api_key', apiKey);
+    await _writeProviderKeysSecure(providerKeys);
+    await prefs.remove('provider_keys');
+    await prefs.remove('api_key');
     await prefs.setString('ai_model', aiModel);
     await prefs.setString('ai_base_url', aiBaseUrl);
     await prefs.setDouble('font_size', fontSize);
@@ -98,6 +114,33 @@ class AppModel extends ChangeNotifier {
 
   String getProviderKey(String provider) {
     return providerKeys[provider] ?? '';
+  }
+
+  Future<Map<String, String>> _readProviderKeysSecure() async {
+    try {
+      final raw = await _secureStorage.read(key: _secureProviderKeysKey);
+      if (raw == null || raw.trim().isEmpty) return {};
+      final decoded = jsonDecode(raw);
+      if (decoded is! Map) return {};
+      return decoded.map((k, v) => MapEntry(k.toString(), (v ?? '').toString()));
+    } catch (_) {
+      return {};
+    }
+  }
+
+  Future<void> _writeProviderKeysSecure(Map<String, String> keys) async {
+    try {
+      if (keys.isEmpty) {
+        await _secureStorage.delete(key: _secureProviderKeysKey);
+      } else {
+        await _secureStorage.write(
+          key: _secureProviderKeysKey,
+          value: jsonEncode(keys),
+        );
+      }
+    } catch (e) {
+      debugPrint('secure storage write failed: $e');
+    }
   }
 
   Future<void> loadQuestions() async {
