@@ -540,7 +540,7 @@ class ProgressPage extends StatelessWidget {
   Widget _buildOverviewGrid(BuildContext context, AppModel model) {
     return LayoutBuilder(
       builder: (ctx, cons) {
-        final cross = (cons.maxWidth / 80).floor().clamp(4, 20);
+        final cross = (cons.maxWidth / 40).floor().clamp(4, 20);
         return GridView.builder(
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: cross),
           itemCount: model.allQuestions.length,
@@ -585,7 +585,7 @@ class _SettingsPageState extends State<SettingsPage> {
   final TextEditingController _baseUrlController = TextEditingController();
   String _provider = 'deepseek';
   String _model = 'deepseek-chat';
-  double _fontSize = 11;
+  double _fontSize = 20;
 
   static const Map<String, List<String>> _modelOptions = {
     'deepseek': ['deepseek-chat', 'deepseek-reasoner'],
@@ -616,7 +616,7 @@ class _SettingsPageState extends State<SettingsPage> {
     final model = Provider.of<AppModel>(context, listen: false);
     _provider = model.aiProvider;
     _model = model.aiModel;
-    _keyController.text = model.apiKey;
+    _keyController.text = model.getProviderKey(_provider);
     _baseUrlController.text = model.aiBaseUrl;
     _fontSize = model.fontSize;
   }
@@ -663,6 +663,8 @@ class _SettingsPageState extends State<SettingsPage> {
                 if (v != null) {
                   setState(() {
                     _provider = v;
+                    _keyController.text =
+                        Provider.of<AppModel>(context, listen: false).getProviderKey(_provider);
                     final opts = _optionsForProvider(v);
                     if (opts.isNotEmpty && !opts.contains(_model)) {
                       _model = _defaultModelFor(v);

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'db.dart';
@@ -17,6 +18,7 @@ class AppModel extends ChangeNotifier {
   // settings
   String aiProvider = 'deepseek';
   String apiKey = '';
+  Map<String, String> providerKeys = {};
   String aiModel = 'deepseek-chat';
   String aiBaseUrl = '';
   double fontSize = 11;
@@ -27,7 +29,24 @@ class AppModel extends ChangeNotifier {
   Future<void> loadSettings() async {
     final prefs = await SharedPreferences.getInstance();
     aiProvider = prefs.getString('ai_provider') ?? 'deepseek';
-    apiKey = prefs.getString('api_key') ?? '';
+    final providerKeysRaw = prefs.getString('provider_keys');
+    providerKeys = {};
+    if (providerKeysRaw != null && providerKeysRaw.trim().isNotEmpty) {
+      try {
+        final decoded = jsonDecode(providerKeysRaw);
+        if (decoded is Map) {
+          providerKeys = decoded.map((k, v) => MapEntry(k.toString(), (v ?? '').toString()));
+        }
+      } catch (_) {}
+    }
+
+    if (providerKeys.isEmpty) {
+      final legacy = prefs.getString('api_key') ?? '';
+      if (legacy.trim().isNotEmpty) {
+        providerKeys['deepseek'] = legacy.trim();
+      }
+    }
+    apiKey = providerKeys[aiProvider] ?? '';
     aiModel = prefs.getString('ai_model') ?? _defaultModelFor(aiProvider);
     aiBaseUrl = prefs.getString('ai_base_url') ?? '';
     fontSize = prefs.getDouble('font_size') ?? 11;
@@ -39,6 +58,7 @@ class AppModel extends ChangeNotifier {
   Future<void> saveSettings() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('ai_provider', aiProvider);
+    await prefs.setString('provider_keys', jsonEncode(providerKeys));
     await prefs.setString('api_key', apiKey);
     await prefs.setString('ai_model', aiModel);
     await prefs.setString('ai_base_url', aiBaseUrl);
@@ -55,7 +75,8 @@ class AppModel extends ChangeNotifier {
     required double font,
   }) async {
     aiProvider = provider;
-    apiKey = key;
+    providerKeys[provider] = key;
+    apiKey = providerKeys[provider] ?? '';
     aiModel = model;
     aiBaseUrl = baseUrl;
     fontSize = font;
@@ -72,6 +93,10 @@ class AppModel extends ChangeNotifier {
       default:
         return 'deepseek-chat';
     }
+  }
+
+  String getProviderKey(String provider) {
+    return providerKeys[provider] ?? '';
   }
 
   Future<void> loadQuestions() async {
