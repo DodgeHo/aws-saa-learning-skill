@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:provider/provider.dart';
 
 import 'ai_client.dart';
@@ -130,6 +131,19 @@ class _QuizPageState extends State<QuizPage> {
     'Favorite': '收藏 ★',
   };
 
+  Color _statusColor(String? status) {
+    switch (status) {
+      case 'Know':
+        return Colors.green.shade700;
+      case 'DontKnow':
+        return Colors.red.shade700;
+      case 'Favorite':
+        return Colors.amber.shade800;
+      default:
+        return Colors.grey.shade700;
+    }
+  }
+
   @override
   void dispose() {
     _inputController.dispose();
@@ -144,8 +158,8 @@ class _QuizPageState extends State<QuizPage> {
 
     setState(() {
       _askingAi = true;
-      _output += '\n[用户][题号:${q.qNum ?? '-'}] $t\n';
-      _output += '[系统] 正在请求 ${model.aiProvider.toUpperCase()}...\n';
+      _output += '\n### 用户（题号: ${q.qNum ?? '-'}）\n$t\n\n';
+      _output += '> 系统：正在请求 ${model.aiProvider.toUpperCase()}...\n\n';
     });
 
     final prompt = _buildPrompt(q, t);
@@ -160,12 +174,12 @@ class _QuizPageState extends State<QuizPage> {
       );
       if (!mounted) return;
       setState(() {
-        _output += '[AI] $reply\n';
+        _output += '### AI 回复\n$reply\n\n---\n';
       });
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _output += '[错误] $e\n';
+        _output += '### 错误\n$e\n\n---\n';
       });
     } finally {
       if (mounted) {
@@ -239,20 +253,40 @@ $enOptions
           runSpacing: 8,
           children: [
             ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.deepPurple.shade500,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              ),
               onPressed: canAsk ? () => _sendQuestion(model, q, '这题用到了什么知识？') : null,
-              child: const Text('知识点'),
+              child: const Text('这题用到了什么知识？'),
             ),
             ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.indigo.shade500,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              ),
               onPressed: canAsk ? () => _sendQuestion(model, q, '这道题是什么意思？') : null,
-              child: const Text('题意'),
+              child: const Text('这道题是什么意思？'),
             ),
             ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.teal.shade500,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              ),
               onPressed: canAsk ? () => _sendQuestion(model, q, '为什么是这个结果？') : null,
-              child: const Text('解析'),
+              child: const Text('为什么是这个结果？'),
             ),
             ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.purple.shade700,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              ),
               onPressed: canAsk ? () => _sendQuestion(model, q, '我没看懂，能更简单吗？') : null,
-              child: const Text('更简单'),
+              child: const Text('我没看懂，能更简单吗？'),
             ),
           ],
         ),
@@ -290,7 +324,10 @@ $enOptions
             ),
             child: SingleChildScrollView(
               controller: _scrollController,
-              child: Text(_output),
+              child: MarkdownBody(
+                selectable: true,
+                data: _output.trim().isEmpty ? '_暂无对话历史_' : _output,
+              ),
             ),
           ),
         ),
@@ -301,6 +338,7 @@ $enOptions
   Widget _buildQuestionPanel(AppModel model, Question q) {
     final displayFilter = _filterModeToDisplay[model.filterMode] ?? '所有';
     final statusText = _statusDisplay[model.currentStatus] ?? '未标记';
+    final statusColor = _statusColor(model.currentStatus);
     final answerText =
         '正确答案：${q.correctAnswer ?? '(空)'}\n\n中文解析：\n${q.explanationZh ?? '(空)'}\n\nEnglish Explanation:\n${q.explanationEn ?? '(empty)'}';
 
@@ -359,7 +397,14 @@ $enOptions
           '第${model.currentIndex + 1}/${model.questions.length} 题 | 题号为${q.qNum ?? '-'}',
           style: Theme.of(context).textTheme.titleMedium?.copyWith(fontSize: model.fontSize),
         ),
-        Text('状态：$statusText', style: TextStyle(fontSize: model.fontSize)),
+        Text(
+          '状态：$statusText',
+          style: TextStyle(
+            fontSize: model.fontSize,
+            color: statusColor,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
         const SizedBox(height: 8),
         Expanded(
           child: SingleChildScrollView(
@@ -392,10 +437,42 @@ $enOptions
         Wrap(
           spacing: 8,
           children: [
-            ElevatedButton(onPressed: model.showAnswer, child: const Text('答案')),
-            ElevatedButton(onPressed: () => model.mark('Know'), child: const Text('会')),
-            ElevatedButton(onPressed: () => model.mark('DontKnow'), child: const Text('不会')),
-            ElevatedButton(onPressed: () => model.mark('Favorite'), child: const Text('收藏')),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blue.shade700,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+              onPressed: model.showAnswer,
+              child: const Text('答案'),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.green.shade600,
+                foregroundColor: Colors.white,
+                shape: const StadiumBorder(),
+              ),
+              onPressed: () => model.mark('Know'),
+              child: const Text('会'),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red.shade600,
+                foregroundColor: Colors.white,
+                shape: const StadiumBorder(),
+              ),
+              onPressed: () => model.mark('DontKnow'),
+              child: const Text('不会'),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.amber.shade600,
+                foregroundColor: Colors.black87,
+                shape: const StadiumBorder(),
+              ),
+              onPressed: () => model.mark('Favorite'),
+              child: const Text('收藏'),
+            ),
           ],
         ),
         const SizedBox(height: 8),
