@@ -12,6 +12,11 @@ ANSWER_AT_END_RE = re.compile(
     flags=re.MULTILINE,
 )
 
+ANSWER_ANYWHERE_RE = re.compile(
+    r'答案[:：]\s*([A-Fa-f][A-Fa-f\s、,，/]*)',
+    flags=re.MULTILINE,
+)
+
 
 def normalize_answer(raw: str | None) -> str | None:
     if raw is None:
@@ -26,16 +31,32 @@ def normalize_answer(raw: str | None) -> str | None:
     return text
 
 
-def strip_answer_from_stem(stem_zh: str | None) -> tuple[str | None, str | None, bool]:
+def strip_answer_from_stem(stem_zh: str | None, aggressive: bool = False) -> tuple[str | None, str | None, bool]:
     if not stem_zh:
         return stem_zh, None, False
 
     match = ANSWER_AT_END_RE.search(stem_zh)
-    if not match:
+    if match:
+        extracted = normalize_answer(match.group(1))
+        cleaned = stem_zh[: match.start()].rstrip()
+        return cleaned, extracted, True
+
+    if not aggressive:
+        return stem_zh, None, False
+
+    # aggressive fallback: use the last "答案：X" marker even if not strict end-of-line.
+    matches = list(ANSWER_ANYWHERE_RE.finditer(stem_zh))
+    if not matches:
+        return stem_zh, None, False
+
+    match = matches[-1]
+    if match.start() < int(len(stem_zh) * 0.55):
+        # too early in the stem; likely descriptive text, skip to avoid false positives
         return stem_zh, None, False
 
     extracted = normalize_answer(match.group(1))
-    cleaned = stem_zh[: match.start()].rstrip()
+    cleaned = (stem_zh[: match.start()] + stem_zh[match.end() :]).rstrip()
+    cleaned = re.sub(r'\s{2,}', ' ', cleaned)
     return cleaned, extracted, True
 
 
@@ -46,7 +67,7 @@ def backup_file(path: Path) -> Path:
     return backup
 
 
-def clean_json(json_path: Path, dry_run: bool) -> tuple[int, int, int, int]:
+def clean_json(json_path: Path, dry_run: bool, aggressive: bool) -> tuple[int, int, int, int]:
     data: list[dict[str, Any]] = json.loads(json_path.read_text(encoding='utf-8'))
 
     touched_rows = 0
@@ -56,7 +77,7 @@ def clean_json(json_path: Path, dry_run: bool) -> tuple[int, int, int, int]:
 
     for row in data:
         original_stem = row.get('stem_zh')
-        cleaned_stem, extracted_answer, changed = strip_answer_from_stem(original_stem)
+        cleaned_stem, extracted_answer, changed = strip_answer_from_stem(original_stem, aggressive=aggressive)
         if not changed:
             continue
 
@@ -80,7 +101,7 @@ def clean_json(json_path: Path, dry_run: bool) -> tuple[int, int, int, int]:
     return touched_rows, stem_fixed, answer_filled, answer_conflicts
 
 
-def clean_db(db_path: Path, dry_run: bool) -> tuple[int, int, int, int]:
+def clean_db(db_path: Path, dry_run: bool, aggressive: bool) -> tuple[int, int, int, int]:
     conn = sqlite3.connect(str(db_path))
     conn.row_factory = sqlite3.Row
 
@@ -95,7 +116,7 @@ def clean_db(db_path: Path, dry_run: bool) -> tuple[int, int, int, int]:
 
     for row in rows:
         qid = row['id']
-        cleaned_stem, extracted_answer, changed = strip_answer_from_stem(row['stem_zh'])
+        cleaned_stem, extracted_answer, changed = strip_answer_from_stem(row['stem_zh'], aggressive=aggressive)
         if not changed:
             continue
 
@@ -155,6 +176,11 @@ def main() -> None:
         action='store_true',
         help='仅统计，不写入文件',
     )
+    parser.add_argument(
+        '--aggressive',
+        action='store_true',
+        help='激进模式：尝试清理不在严格行尾的「答案：X」标记',
+    )
 
     args = parser.parse_args()
 
@@ -167,7 +193,9 @@ def main() -> None:
         if not json_path.exists():
             print(f'[JSON] 文件不存在，跳过: {json_path}')
         else:
-            touched, stem_fixed, answer_filled, answer_conflicts = clean_json(json_path, args.dry_run)
+            touched, stem_fixed, answer_filled, answer_conflicts = clean_json(
+                json_path, args.dry_run, args.aggressive
+            )
             total_touched += touched
             print(
                 f'[JSON] 命中: {touched}, 题干修复: {stem_fixed}, 回填答案: {answer_filled}, 答案冲突: {answer_conflicts}'
@@ -177,7 +205,9 @@ def main() -> None:
         if not db_path.exists():
             print(f'[DB] 文件不存在，跳过: {db_path}')
         else:
-            touched, stem_fixed, answer_filled, answer_conflicts = clean_db(db_path, args.dry_run)
+            touched, stem_fixed, answer_filled, answer_conflicts = clean_db(
+                db_path, args.dry_run, args.aggressive
+            )
             total_touched += touched
             print(
                 f'[DB] 命中: {touched}, 题干修复: {stem_fixed}, 回填答案: {answer_filled}, 答案冲突: {answer_conflicts}'
