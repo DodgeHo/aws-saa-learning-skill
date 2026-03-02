@@ -263,7 +263,7 @@ $enOptions
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
               ),
-              onPressed: canAsk ? () => _sendQuestion(model, q, '这道题是什么意思？') : null,
+              onPressed: canAsk ? () => _sendQuestion(model, q, '请用通俗中文解释这道题在问什么，并指出关键词。') : null,
               child: const Text('这道题是什么意思？'),
             ),
             ElevatedButton(
@@ -281,7 +281,7 @@ $enOptions
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
               ),
-              onPressed: canAsk ? () => _sendQuestion(model, q, '我没看懂，能更简单吗？') : null,
+              onPressed: canAsk ? () => _sendQuestion(model, q, '请用更简单、面向初学者的方式重讲，并给一个生活类比') : null,
               child: const Text('我没看懂，能更简单吗？'),
             ),
           ],
