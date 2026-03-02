@@ -399,21 +399,23 @@ $enOptions
         ),
         const SizedBox(height: 8),
         Expanded(
-          child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (q.stemZh != null)
-                  Text('【中文题干】\n${q.stemZh}\n', style: TextStyle(fontSize: model.fontSize)),
-                if (q.optionsZh != null)
-                  Text('【中文选项】\n${q.optionsZh!.join('\n')}\n',
-                      style: TextStyle(fontSize: model.fontSize)),
-                if (q.stemEn != null)
-                  Text('【English Stem】\n${q.stemEn}\n', style: TextStyle(fontSize: model.fontSize)),
-                if (q.optionsEn != null)
-                  Text('【English Options】\n${q.optionsEn!.join('\n')}\n',
-                      style: TextStyle(fontSize: model.fontSize)),
-              ],
+          child: SelectionArea(
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (q.stemZh != null)
+                    Text('【中文题干】\n${q.stemZh}\n', style: TextStyle(fontSize: model.fontSize)),
+                  if (q.optionsZh != null)
+                    Text('【中文选项】\n${q.optionsZh!.join('\n')}\n',
+                        style: TextStyle(fontSize: model.fontSize)),
+                  if (q.stemEn != null)
+                    Text('【English Stem】\n${q.stemEn}\n', style: TextStyle(fontSize: model.fontSize)),
+                  if (q.optionsEn != null)
+                    Text('【English Options】\n${q.optionsEn!.join('\n')}\n',
+                        style: TextStyle(fontSize: model.fontSize)),
+                ],
+              ),
             ),
           ),
         ),
@@ -469,13 +471,15 @@ $enOptions
         ),
         const SizedBox(height: 8),
         if (model.answerVisible)
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.black12),
-              borderRadius: BorderRadius.circular(8),
+          SelectionArea(
+            child: Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.black12),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(answerText, style: TextStyle(fontSize: model.fontSize - 1)),
             ),
-            child: Text(answerText, style: TextStyle(fontSize: model.fontSize - 1)),
           ),
       ],
     );

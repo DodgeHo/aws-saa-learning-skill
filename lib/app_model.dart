@@ -22,7 +22,7 @@ class AppModel extends ChangeNotifier {
   Map<String, String> providerKeys = {};
   String aiModel = 'deepseek-chat';
   String aiBaseUrl = '';
-  double fontSize = 11;
+  double fontSize = 20;
 
   String filterMode = 'All';
   bool randomOrder = false;
@@ -50,7 +50,7 @@ class AppModel extends ChangeNotifier {
     apiKey = providerKeys[aiProvider] ?? '';
     aiModel = prefs.getString('ai_model') ?? _defaultModelFor(aiProvider);
     aiBaseUrl = prefs.getString('ai_base_url') ?? '';
-    fontSize = prefs.getDouble('font_size') ?? 11;
+    fontSize = prefs.getDouble('font_size') ?? 20;
     filterMode = prefs.getString('filter_mode') ?? 'All';
     randomOrder = prefs.getBool('random_order') ?? false;
     notifyListeners();
