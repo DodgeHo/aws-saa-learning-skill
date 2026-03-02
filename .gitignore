@@ -21,6 +21,13 @@ android/.gradle/
 
 # Database backups
 *.db.bak
+*.db.bak.*
+*.db.manual_backup.*
+*.db.manual_backup_before_aggressive.*
+*.json.bak.*
+
+# Generated reports
+reports/*.txt
 
 # macOS
 .DS_Store

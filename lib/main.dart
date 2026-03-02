@@ -817,7 +817,34 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
             const SizedBox(height: 8),
             const Text('API Key'),
-            TextField(controller: _keyController),
+            TextField(
+              controller: _keyController,
+              onChanged: (_) => setState(() {}),
+            ),
+            const SizedBox(height: 6),
+            Row(
+              children: [
+                Icon(
+                  _keyController.text.trim().isNotEmpty ? Icons.lock : Icons.lock_open,
+                  size: 16,
+                  color: _keyController.text.trim().isNotEmpty
+                      ? Colors.green.shade700
+                      : Colors.grey.shade700,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  _keyController.text.trim().isNotEmpty
+                      ? '当前 Key 将保存到系统安全存储'
+                      : '未填写 Key（保存后会写入系统安全存储）',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: _keyController.text.trim().isNotEmpty
+                        ? Colors.green.shade700
+                        : Colors.grey.shade700,
+                  ),
+                ),
+              ],
+            ),
             const SizedBox(height: 8),
             const Text('字体大小'),
             Slider(
