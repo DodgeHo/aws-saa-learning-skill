@@ -10,6 +10,7 @@ class AppModel extends ChangeNotifier {
   List<Question> questions = [];
   int currentIndex = 0;
   Map<int, String> statusByQuestionId = {};
+  Map<int, String> chatHistoryByQuestionId = {};
   bool answerVisible = false;
 
   // web-specific flag when DB can't be opened
@@ -117,6 +118,7 @@ class AppModel extends ChangeNotifier {
       });
 
       statusByQuestionId = await AppDatabase.getLatestStatuses();
+      chatHistoryByQuestionId = await AppDatabase.getAllChatHistories();
 
       _applyFilterAndRandom();
       if (questions.isEmpty) {
@@ -161,6 +163,12 @@ class AppModel extends ChangeNotifier {
     final q = currentQuestion;
     if (q == null) return null;
     return statusByQuestionId[q.id];
+  }
+
+  String get currentChatHistory {
+    final q = currentQuestion;
+    if (q == null) return '';
+    return chatHistoryByQuestionId[q.id] ?? '';
   }
 
   void next() {
@@ -255,5 +263,29 @@ class AppModel extends ChangeNotifier {
   void showAnswer() {
     answerVisible = true;
     notifyListeners();
+  }
+
+  Future<void> appendToCurrentChatHistory(String markdownChunk) async {
+    final q = currentQuestion;
+    if (q == null) return;
+    final old = chatHistoryByQuestionId[q.id] ?? '';
+    final next = '$old$markdownChunk';
+    chatHistoryByQuestionId[q.id] = next;
+    notifyListeners();
+    await AppDatabase.setChatHistory(q.id, next);
+  }
+
+  Future<void> clearCurrentChatHistory() async {
+    final q = currentQuestion;
+    if (q == null) return;
+    chatHistoryByQuestionId.remove(q.id);
+    notifyListeners();
+    await AppDatabase.clearChatHistory(q.id);
+  }
+
+  Future<void> clearAllChatHistories() async {
+    chatHistoryByQuestionId = {};
+    notifyListeners();
+    await AppDatabase.clearAllChatHistories();
   }
 }

@@ -8,6 +8,7 @@ class AppDatabase {
   static const String _dbAssetVersion = '2026-03-01-zh-fix-v1';
   static final _questionStore = stringMapStoreFactory.store('questions');
   static final _statusStore = intMapStoreFactory.store('user_status');
+  static final _chatStore = intMapStoreFactory.store('chat_history');
   static final _metaStore = stringMapStoreFactory.store('meta');
 
   static Future<Database> getInstance() async {
@@ -101,5 +102,50 @@ class AppDatabase {
       m[st] = (m[st] ?? 0) + 1;
     }
     return m;
+  }
+
+  static Future<String?> getChatHistory(int questionId) async {
+    final db = await getInstance();
+    final rec = await _chatStore.record(questionId).get(db);
+    if (rec == null) return null;
+    final content = rec['content'];
+    return content is String ? content : null;
+  }
+
+  static Future<Map<int, String>> getAllChatHistories() async {
+    final db = await getInstance();
+    final recs = await _chatStore.find(db);
+    final map = <int, String>{};
+    for (final record in recs) {
+      final qid = record.key;
+      final content = record.value['content'];
+      if (content is String && content.trim().isNotEmpty) {
+        map[qid] = content;
+      }
+    }
+    return map;
+  }
+
+  static Future<void> setChatHistory(int questionId, String content) async {
+    final db = await getInstance();
+    final trimmed = content.trim();
+    if (trimmed.isEmpty) {
+      await clearChatHistory(questionId);
+      return;
+    }
+    await _chatStore.record(questionId).put(db, {
+      'content': content,
+      'updated_at': DateTime.now().toIso8601String(),
+    });
+  }
+
+  static Future<void> clearChatHistory(int questionId) async {
+    final db = await getInstance();
+    await _chatStore.record(questionId).delete(db);
+  }
+
+  static Future<void> clearAllChatHistories() async {
+    final db = await getInstance();
+    await _chatStore.drop(db);
   }
 }

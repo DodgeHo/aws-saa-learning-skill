@@ -108,7 +108,6 @@ class _QuizPageState extends State<QuizPage> {
   final TextEditingController _inputController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final TextEditingController _jumpController = TextEditingController();
-  String _output = '';
   bool _askingAi = false;
 
   static const Map<String, String> _filterDisplayToMode = {
@@ -158,9 +157,10 @@ class _QuizPageState extends State<QuizPage> {
 
     setState(() {
       _askingAi = true;
-      _output += '\n### 用户（题号: ${q.qNum ?? '-'}）\n$t\n\n';
-      _output += '> 系统：正在请求 ${model.aiProvider.toUpperCase()}...\n\n';
     });
+
+    await model.appendToCurrentChatHistory('\n### 用户（题号: ${q.qNum ?? '-'}）\n$t\n\n');
+    await model.appendToCurrentChatHistory('> 系统：正在请求 ${model.aiProvider.toUpperCase()}...\n\n');
 
     final prompt = _buildPrompt(q, t);
 
@@ -173,14 +173,10 @@ class _QuizPageState extends State<QuizPage> {
         baseUrl: model.aiBaseUrl,
       );
       if (!mounted) return;
-      setState(() {
-        _output += '### AI 回复\n$reply\n\n---\n';
-      });
+      await model.appendToCurrentChatHistory('### AI 回复\n$reply\n\n---\n');
     } catch (e) {
       if (!mounted) return;
-      setState(() {
-        _output += '### 错误\n$e\n\n---\n';
-      });
+      await model.appendToCurrentChatHistory('### 错误\n$e\n\n---\n');
     } finally {
       if (mounted) {
         setState(() {
@@ -307,11 +303,7 @@ $enOptions
         Align(
           alignment: Alignment.centerRight,
           child: TextButton(
-            onPressed: () {
-              setState(() {
-                _output = '';
-              });
-            },
+            onPressed: () => model.clearCurrentChatHistory(),
             child: const Text('清空历史'),
           ),
         ),
@@ -326,7 +318,7 @@ $enOptions
               controller: _scrollController,
               child: MarkdownBody(
                 selectable: true,
-                data: _output.trim().isEmpty ? '_暂无对话历史_' : _output,
+                data: model.currentChatHistory.trim().isEmpty ? '_暂无对话历史_' : model.currentChatHistory,
               ),
             ),
           ),
@@ -721,6 +713,55 @@ class _SettingsPageState extends State<SettingsPage> {
     Navigator.of(context).pop();
   }
 
+  Future<void> _clearAllChatHistoryWithTripleConfirm() async {
+    final step1 = await showDialog<bool>(
+      context: context,
+      builder: (dialogCtx) => AlertDialog(
+        title: const Text('确认清空'),
+        content: const Text('将清空所有题目的 AI 对话历史，且不可恢复。继续？'),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(dialogCtx).pop(false), child: const Text('取消')),
+          ElevatedButton(onPressed: () => Navigator.of(dialogCtx).pop(true), child: const Text('继续')),
+        ],
+      ),
+    );
+    if (step1 != true) return;
+    if (!mounted) return;
+
+    final step2 = await showDialog<bool>(
+      context: context,
+      builder: (dialogCtx) => AlertDialog(
+        title: const Text('二次确认'),
+        content: const Text('再次提醒：此操作不可恢复，所有题目的历史都会删除。'),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(dialogCtx).pop(false), child: const Text('取消')),
+          ElevatedButton(onPressed: () => Navigator.of(dialogCtx).pop(true), child: const Text('继续')),
+        ],
+      ),
+    );
+    if (step2 != true) return;
+    if (!mounted) return;
+
+    final step3 = await showDialog<bool>(
+      context: context,
+      builder: (dialogCtx) => AlertDialog(
+        title: const Text('最终确认'),
+        content: const Text('最后确认：立即清空全部对话历史（不可恢复）？'),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(dialogCtx).pop(false), child: const Text('取消')),
+          ElevatedButton(onPressed: () => Navigator.of(dialogCtx).pop(true), child: const Text('立即清空')),
+        ],
+      ),
+    );
+    if (step3 != true) return;
+    if (!mounted) return;
+
+    final model = Provider.of<AppModel>(context, listen: false);
+    await model.clearAllChatHistories();
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('所有对话历史已清空')));
+  }
+
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
@@ -824,6 +865,12 @@ class _SettingsPageState extends State<SettingsPage> {
               ],
             ),
             const SizedBox(height: 16),
+            OutlinedButton(
+              onPressed: _clearAllChatHistoryWithTripleConfirm,
+              style: OutlinedButton.styleFrom(foregroundColor: Colors.red.shade700),
+              child: const Text('清空所有对话历史（不可恢复）'),
+            ),
+            const SizedBox(height: 8),
             ElevatedButton(onPressed: _savePrefs, child: const Text('保存')),
           ],
         ),

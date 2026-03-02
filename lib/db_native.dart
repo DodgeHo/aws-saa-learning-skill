@@ -64,6 +64,13 @@ class AppDatabase {
         value TEXT
       )
     ''');
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS chat_history (
+        question_id INTEGER PRIMARY KEY,
+        content TEXT,
+        updated_at TEXT
+      )
+    ''');
   }
 
   static Future<void> _markDbVersion(Database db) async {
@@ -169,5 +176,60 @@ class AppDatabase {
       m[r['status'] as String] = r['c'] as int;
     }
     return m;
+  }
+
+  static Future<String?> getChatHistory(int questionId) async {
+    final db = await getInstance();
+    final res = await db.query(
+      'chat_history',
+      columns: ['content'],
+      where: 'question_id = ?',
+      whereArgs: [questionId],
+      limit: 1,
+    );
+    if (res.isEmpty) return null;
+    return res.first['content'] as String?;
+  }
+
+  static Future<Map<int, String>> getAllChatHistories() async {
+    final db = await getInstance();
+    final rows = await db.query('chat_history');
+    final map = <int, String>{};
+    for (final row in rows) {
+      final qid = row['question_id'];
+      final content = row['content'];
+      if (qid is int && content is String && content.trim().isNotEmpty) {
+        map[qid] = content;
+      }
+    }
+    return map;
+  }
+
+  static Future<void> setChatHistory(int questionId, String content) async {
+    final db = await getInstance();
+    final trimmed = content.trim();
+    if (trimmed.isEmpty) {
+      await clearChatHistory(questionId);
+      return;
+    }
+    await db.insert(
+      'chat_history',
+      {
+        'question_id': questionId,
+        'content': content,
+        'updated_at': DateTime.now().toIso8601String(),
+      },
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  static Future<void> clearChatHistory(int questionId) async {
+    final db = await getInstance();
+    await db.delete('chat_history', where: 'question_id = ?', whereArgs: [questionId]);
+  }
+
+  static Future<void> clearAllChatHistories() async {
+    final db = await getInstance();
+    await db.delete('chat_history');
   }
 }
