@@ -20,12 +20,12 @@ android {
         }
         create("sap") {
             dimension = "bank"
-            applicationId = "com.example.aws_saa_trainer.sap"
+            applicationId = "com.example.aws_sap_trainer"
             manifestPlaceholders["appLabel"] = "SAP 练习"
         }
         create("ispm") {
             dimension = "bank"
-            applicationId = "com.example.aws_saa_trainer.ispm"
+            applicationId = "com.example.ispm.trainer"
             manifestPlaceholders["appLabel"] = "ISPM 练习(实验)"
         }
     }
