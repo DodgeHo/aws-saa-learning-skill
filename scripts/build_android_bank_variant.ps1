@@ -19,14 +19,18 @@ try {
     throw "flutter pub get failed"
   }
 
-  flutter build apk --release
+  flutter build apk --release --flavor $Bank
   if ($LASTEXITCODE -ne 0) {
     throw "flutter build apk failed"
   }
 
-  $apk = Join-Path $root 'build/app/outputs/flutter-apk/app-release.apk'
-  if (!(Test-Path $apk)) {
-    throw "APK not found: $apk"
+  $apkCandidates = @(
+    (Join-Path $root "build/app/outputs/flutter-apk/app-$Bank-release.apk"),
+    (Join-Path $root 'build/app/outputs/flutter-apk/app-release.apk')
+  )
+  $apk = $apkCandidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+  if (-not $apk) {
+    throw "APK not found for flavor '$Bank'. Checked: $($apkCandidates -join ', ')"
   }
 
   $outDir = Join-Path $root 'release/banks'

@@ -10,6 +10,26 @@ android {
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
+    flavorDimensions += "bank"
+
+    productFlavors {
+        create("saa") {
+            dimension = "bank"
+            applicationId = "com.example.aws_saa_trainer"
+            manifestPlaceholders["appLabel"] = "SAA 练习"
+        }
+        create("sap") {
+            dimension = "bank"
+            applicationId = "com.example.aws_saa_trainer.sap"
+            manifestPlaceholders["appLabel"] = "SAP 练习"
+        }
+        create("ispm") {
+            dimension = "bank"
+            applicationId = "com.example.aws_saa_trainer.ispm"
+            manifestPlaceholders["appLabel"] = "ISPM 练习(实验)"
+        }
+    }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17

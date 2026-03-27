@@ -38,7 +38,15 @@
 
 产物：
 
-- `build/app/outputs/flutter-apk/app-release.apk`
+- `build/app/outputs/flutter-apk/app-saa-release.apk`
+
+指定题库变体（可并存安装）：
+
+```powershell
+.\scripts\build_android.ps1 -Bank saa
+.\scripts\build_android.ps1 -Bank sap
+.\scripts\build_android.ps1 -Bank ispm
+```
 
 ### Debug APK
 
@@ -48,7 +56,7 @@
 
 产物：
 
-- `build/app/outputs/flutter-apk/app-debug.apk`
+- `build/app/outputs/flutter-apk/app-saa-debug.apk`
 
 ## 4) 一键构建 AAB（上架包）
 
@@ -58,7 +66,7 @@
 
 产物：
 
-- `build/app/outputs/bundle/release/app-release.aab`
+- `build/app/outputs/bundle/saaRelease/app-saa-release.aab`
 
 ## 5) 代理开关
 
