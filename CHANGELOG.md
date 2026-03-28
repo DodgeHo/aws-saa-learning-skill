@@ -1,5 +1,14 @@
 ﻿# Changelog
 
+## 0.2.1 - 2026-03-28
+- Android multi-app installability:
+  - fixed SAP package id to `com.example.aws_sap_trainer`
+  - fixed ISPM package id to `com.example.ispm.trainer`
+  - ensured SAA / SAP / ISPM APKs can coexist on one Android device
+- Release asset naming:
+  - aligned release artifact filenames with per-bank app identity
+  - published corrected Android artifacts for SAP and ISPM
+
 ## 0.2.0 - 2026-03-26
 - Multi-bank delivery:
   - added developer bank switching workflow for SAA / SAP / ISPM without database schema changes
