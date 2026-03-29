@@ -6,6 +6,7 @@ import 'package:sembast_web/sembast_web.dart';
 class AppDatabase {
   static Database? _db;
   static const String _dbAssetVersion = '2026-03-26-multibank-v3';
+  static String? _activeBank;
   static final _questionStore = stringMapStoreFactory.store('questions');
   static final _statusStore = intMapStoreFactory.store('user_status');
   static final _chatStore = intMapStoreFactory.store('chat_history');
@@ -15,7 +16,8 @@ class AppDatabase {
     if (_db != null) return _db!;
 
     // open sembast database; on web it uses IndexedDB automatically
-    _db = await databaseFactoryWeb.openDatabase('aws_saa_trainer.db');
+    final activeBank = await _resolveActiveBank();
+    _db = await databaseFactoryWeb.openDatabase('aws_saa_trainer_$activeBank.db');
 
     final version = await _metaStore.record('questions_version').get(_db!) as Map<String, dynamic>?;
     final currentVersion = version?['value'] as String?;
@@ -28,6 +30,22 @@ class AppDatabase {
       await _metaStore.record('questions_version').put(_db!, {'value': _dbAssetVersion});
     }
     return _db!;
+  }
+
+  static Future<String> _resolveActiveBank() async {
+    if (_activeBank != null) return _activeBank!;
+
+    try {
+      final marker = (await rootBundle.loadString('assets/active_bank.txt')).trim().toLowerCase();
+      if (marker == 'sap' || marker == 'ispm') {
+        _activeBank = marker;
+      } else {
+        _activeBank = 'saa';
+      }
+    } catch (_) {
+      _activeBank = 'saa';
+    }
+    return _activeBank!;
   }
 
   static Future<bool> _needsWebRepair() async {

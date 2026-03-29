@@ -26,7 +26,7 @@ HEADER_NOISE = (
     "全国计算机技术与软件专业技术资格",
     "信息系统项目管理师",
     "软考",
-    "第",
+    "第", 
 )
 
 
@@ -174,7 +174,12 @@ def ocr_pdf_text(pdf_path: Path, max_pages: int = 32) -> str:
 
 
 def split_objective_blocks(text: str) -> list[str]:
-    matches = list(re.finditer(r"(?m)^\s*(\d{1,3})[\.、]\s*", text))
+    matches = list(
+        re.finditer(
+            r"(?m)^\s*试题\s*[一二三四五六七八九十百\d]+\s*(?:[-:：.【]|\s)",
+            text,
+        )
+    )
     if not matches:
         return [text] if text else []
 
@@ -187,7 +192,12 @@ def split_objective_blocks(text: str) -> list[str]:
 
 
 def split_case_blocks(text: str) -> list[str]:
-    matches = list(re.finditer(r"(?m)^\s*(?:试题[一二三四五六七八九十]|问题\s*[#：:]?\s*\d+)", text))
+    matches = list(
+        re.finditer(
+            r"(?m)^\s*(?:【?\s*\d{4}.*?试题\s*[一二三四五六七八九十\d]+.*?】?|试题\s*[一二三四五六七八九十\d]+\s*[：:])",
+            text,
+        )
+    )
     if not matches:
         return [text] if text else []
 
@@ -200,7 +210,7 @@ def split_case_blocks(text: str) -> list[str]:
 
 
 def split_essay_blocks(text: str) -> list[str]:
-    matches = list(re.finditer(r"(?m)^\s*(?:试题[一二三四五六七八九十]|论文(?:题目)?[：:]?)", text))
+    matches = list(re.finditer(r"(?m)^\s*(?:试题\s*[一二三四五六七八九十\d]+\s*[：:]|论文(?:题目)?\s*[：:]?)", text))
     if not matches:
         return [text] if text else []
 
@@ -213,29 +223,40 @@ def split_essay_blocks(text: str) -> list[str]:
 
 
 def parse_objective(block: str):
-    ans_match = re.search(r"(?:答案|参考答案|正确答案)\s*[：:]?\s*([A-F])", block, re.I)
+    ans_match = re.search(r"(?:答案|参考答案|正确答案)\s*[】\]:：\s\(（]*([A-F])", block, re.I)
     correct = ans_match.group(1).upper() if ans_match else None
 
-    split = re.split(r"(?:答案|参考答案|正确答案|要点点评|解析)\s*[：:]", block, maxsplit=1)
+    split = re.split(r"(?:答案|参考答案|正确答案|要点点评|解析)\s*[】\]:：]", block, maxsplit=1)
     prompt = split[0].strip()
     tail = split[1].strip() if len(split) > 1 else ""
 
-    option_matches = list(
-        re.finditer(
-            r"(?ms)(?:^|\n)\s*([A-F])[\.、\)]\s*(.*?)(?=(?:\n\s*[A-F][\.、\)]\s*)|\Z)",
-            prompt,
-        )
-    )
+    option_matches = list(re.finditer(r"([A-F])[\.、\)]\s*", prompt))
     options = []
-    if option_matches:
+    if len(option_matches) >= 2:
         stem = prompt[: option_matches[0].start()].strip()
-        for om in option_matches:
+        for i, om in enumerate(option_matches):
             label = om.group(1).upper()
-            content = om.group(2).strip()
+            content_start = om.end()
+            content_end = option_matches[i + 1].start() if i + 1 < len(option_matches) else len(prompt)
+            content = prompt[content_start:content_end].strip()
             if content:
                 options.append(f"{label}. {content}")
     else:
-        stem = prompt
+        fallback_options = list(
+            re.finditer(
+                r"(?ms)(?:^|\n)\s*([A-F])[\.、\)]\s*(.*?)(?=(?:\n\s*[A-F][\.、\)]\s*)|\Z)",
+                prompt,
+            )
+        )
+        if fallback_options:
+            stem = prompt[: fallback_options[0].start()].strip()
+            for om in fallback_options:
+                label = om.group(1).upper()
+                content = om.group(2).strip()
+                if content:
+                    options.append(f"{label}. {content}")
+        else:
+            stem = prompt
 
     key_commentary = ""
     if re.search(r"要点点评", block):
@@ -248,7 +269,7 @@ def parse_objective(block: str):
 
 
 def parse_case_or_essay(block: str):
-    split = re.split(r"(?:参考答案|答案|要点点评|解析)\s*[：:]", block, maxsplit=1)
+    split = re.split(r"(?:参考答案|答案|要点点评|解析)\s*[】\]:：]", block, maxsplit=1)
     stem = split[0].strip()
     commentary = split[1].strip() if len(split) > 1 else None
     return stem or None, None, None, commentary
@@ -256,10 +277,19 @@ def parse_case_or_essay(block: str):
 
 def classify_from_path(path: Path) -> str:
     p = str(path)
-    if "01-综合知识" in p:
+    n = path.name
+    if any(k in p for k in ("01-综合知识", "选择题")):
         return "objective"
-    if "02-案例分析" in p:
+    if any(k in p for k in ("02-案例分析", "案例题")):
         return "case"
+    if any(k in p for k in ("03-论文写作", "论文题")):
+        return "essay"
+    if "案例" in n:
+        return "case"
+    if "论文" in n:
+        return "essay"
+    if "试题" in n:
+        return "objective"
     return "essay"
 
 

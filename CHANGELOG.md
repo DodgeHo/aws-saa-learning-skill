@@ -1,5 +1,15 @@
 ﻿# Changelog
 
+## 0.2.2 - 2026-03-28
+- ISPM bank rebuild from corrected OCR source set:
+  - updated ISPM parser to support new source layout (`选择题` / `案例题` / `论文题`)
+  - fixed question-type classification so objective/case/essay are no longer collapsed into essay
+  - improved objective block splitting and option extraction for `试题 N` style source text
+  - regenerated `assets/banks/ispm` with refreshed manifest counts
+- Release packaging:
+  - promoted ISPM build artifact naming from `ispm-experimental` to `ispm`
+  - prepared release notes draft for corrected ISPM delivery
+
 ## 0.2.1 - 2026-03-28
 - Android multi-app installability:
   - fixed SAP package id to `com.example.aws_sap_trainer`

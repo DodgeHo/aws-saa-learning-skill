@@ -10,6 +10,7 @@ $root = Resolve-Path (Join-Path $PSScriptRoot '..')
 $bankDir = Join-Path $root "assets/banks/$Bank"
 $targetJson = Join-Path $root 'assets/questions.json'
 $targetDb = Join-Path $root 'assets/data.db'
+$targetBank = Join-Path $root 'assets/active_bank.txt'
 $sourceJson = Join-Path $bankDir 'questions.json'
 $sourceDb = Join-Path $bankDir 'data.db'
 
@@ -22,6 +23,7 @@ if (!(Test-Path $sourceDb)) {
 
 Copy-Item -Path $sourceJson -Destination $targetJson -Force
 Copy-Item -Path $sourceDb -Destination $targetDb -Force
+Set-Content -Path $targetBank -Value $Bank -Encoding ASCII
 
 Write-Host "Selected bank '$Bank'"
-Write-Host "Updated assets/questions.json and assets/data.db"
+Write-Host "Updated assets/questions.json, assets/data.db and assets/active_bank.txt"

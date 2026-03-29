@@ -1,5 +1,5 @@
 name: aws_saa_trainer
-version: 0.2.1+8
+version: 0.2.2+9
 description: SAA 练习，支持PC、平板、手机多端适配
 publish_to: 'none'
 environment:
@@ -27,5 +27,6 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   assets:
+    - assets/active_bank.txt
     - assets/data.db
     - assets/questions.json

@@ -1,0 +1,46 @@
+=== pdfsandwich 批量处理开始 2026-03-28 20:30:02 ===
+输入目录: /home/ubuntu/ISPM
+输出目录: /home/ubuntu/ISPM_ocr_pdfsandwich
+
+[1] 20:30:02 处理: 论文题/2022年上半年论文写作试题.pdf
+   正在使用 pdfsandwich 处理...
+pdfsandwich version 0.1.7
+Input file: "/home/ubuntu/ISPM/论文题/2022年上半年论文写作试题.pdf"
+Output file: "/home/ubuntu/ISPM_ocr_pdfsandwich/论文题/2022年上半年论文写作试题_ocr.pdf"
+Number of pages in inputfile: 1
+More threads than pages. Using 1 threads instead.
+Processing page 1.
+identify -format "%w\n%h\n"  "/tmp/pdfsandwich_tmpb8e42a/pdfsandwich_inputfile3de0c1.pdf[0]" 
+   ✗ 处理失败
+
+[2] 20:30:04 处理: 论文题/2022年下半年论文写作试题.pdf
+   正在使用 pdfsandwich 处理...
+pdfsandwich version 0.1.7
+Input file: "/home/ubuntu/ISPM/论文题/2022年下半年论文写作试题.pdf"
+Output file: "/home/ubuntu/ISPM_ocr_pdfsandwich/论文题/2022年下半年论文写作试题_ocr.pdf"
+Number of pages in inputfile: 1
+More threads than pages. Using 1 threads instead.
+Processing page 1.
+identify -format "%w\n%h\n"  "/tmp/pdfsandwich_tmpfe2aec/pdfsandwich_inputfilecfd91f.pdf[0]" 
+   ✗ 处理失败
+
+[3] 20:30:05 处理: 论文题/2021年下半年论文写作试题.pdf
+   正在使用 pdfsandwich 处理...
+pdfsandwich version 0.1.7
+Input file: "/home/ubuntu/ISPM/论文题/2021年下半年论文写作试题.pdf"
+Output file: "/home/ubuntu/ISPM_ocr_pdfsandwich/论文题/2021年下半年论文写作试题_ocr.pdf"
+Number of pages in inputfile: 1
+More threads than pages. Using 1 threads instead.
+Processing page 1.
+identify -format "%w\n%h\n"  "/tmp/pdfsandwich_tmpe0dab9/pdfsandwich_inputfile13c11a.pdf[0]" 
+   ✗ 处理失败
+
+[4] 20:30:05 处理: 论文题/2023年下半年论文写作试题（第4批）.pdf
+   正在使用 pdfsandwich 处理...
+pdfsandwich version 0.1.7
+Input file: "/home/ubuntu/ISPM/论文题/2023年下半年论文写作试题（第4批）.pdf"
+Output file: "/home/ubuntu/ISPM_ocr_pdfsandwich/论文题/2023年下半年论文写作试题（第4批）_ocr.pdf"
+Number of pages in inputfile: 1
+More threads than pages. Using 1 threads instead.
+Processing page 1.
+identify -format "%w\n%h\n"  "/tmp/pdfsandwich_tmp8421ec/pdfsandwich_inputfilecd98a2.pdf[0]" 

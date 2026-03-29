@@ -35,7 +35,7 @@ try {
 
   $outDir = Join-Path $root 'release/banks'
   New-Item -ItemType Directory -Force -Path $outDir | Out-Null
-  $artifactBankTag = if ($Bank -eq 'ispm') { 'ispm-experimental' } else { $Bank }
+  $artifactBankTag = $Bank
   $outApk = Join-Path $outDir "app-$VersionTag-$artifactBankTag.apk"
   Copy-Item -Path $apk -Destination $outApk -Force
 

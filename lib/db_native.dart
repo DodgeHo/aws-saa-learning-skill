@@ -13,6 +13,7 @@ class AppDatabase {
   static sqflite.Database? _sqfliteDb;
   static sembast.Database? _sembastDb;
   static const String _dbAssetVersion = '2026-03-26-multibank-v3';
+  static String? _activeBank;
 
   static final _questionStore = sembast.stringMapStoreFactory.store('questions');
   static final _statusStore = sembast.intMapStoreFactory.store('user_status');
@@ -32,9 +33,10 @@ class AppDatabase {
   static Future<void> _ensureDesktopDb() async {
     if (_sembastDb != null) return;
 
+    final activeBank = await _resolveActiveBank();
     final supportDir = await getApplicationSupportDirectory();
     await supportDir.create(recursive: true);
-    final dbPath = p.join(supportDir.path, 'data.db');
+    final dbPath = p.join(supportDir.path, 'data_$activeBank.db');
 
     try {
       _sembastDb = await databaseFactoryIo.openDatabase(dbPath);
@@ -77,8 +79,9 @@ class AppDatabase {
   static Future<void> _ensureSqfliteDb() async {
     if (_sqfliteDb != null) return;
 
+    final activeBank = await _resolveActiveBank();
     final databasesPath = await sqflite.getDatabasesPath();
-    final path = p.join(databasesPath, 'data.db');
+    final path = p.join(databasesPath, 'data_$activeBank.db');
 
     if (!await File(path).exists()) {
       await _copyAssetDb(path);
@@ -125,6 +128,23 @@ class AppDatabase {
     final data = await rootBundle.load('assets/data.db');
     final bytes = data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);
     await File(path).writeAsBytes(bytes, flush: true);
+  }
+
+  static Future<String> _resolveActiveBank() async {
+    if (_activeBank != null) return _activeBank!;
+
+    try {
+      final marker = (await rootBundle.loadString('assets/active_bank.txt')).trim().toLowerCase();
+      if (marker == 'sap' || marker == 'ispm') {
+        _activeBank = marker;
+      } else {
+        _activeBank = 'saa';
+      }
+    } catch (_) {
+      _activeBank = 'saa';
+    }
+
+    return _activeBank!;
   }
 
   static Future<void> _ensureRuntimeTables(sqflite.Database db) async {

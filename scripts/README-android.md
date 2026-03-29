@@ -167,12 +167,11 @@ py -m pip install pypdf
 输出文件：
 - `release/banks/app-0.2.0-saa.apk`
 - `release/banks/app-0.2.0-sap.apk`
-- `release/banks/app-0.2.0-ispm-experimental.apk`
+- `release/banks/app-0.2.0-ispm.apk`
 
 ### 9.5 当前发布风险说明
 
 - `saa`：当前为默认稳定题库。
 - `sap`：已完成 PDF 抽取与资产生成，可作为 0.2.0 变体输出。
-- `ispm`：当前构建链路可跑通，但扫描版 PDF 的 OCR 质量不足，题面与答案存在明显噪声。
-- 当前脚本会将 ISPM 构建产物自动命名为 `ispm-experimental`，用于区分稳定包。
-- 建议：在正式对外发布前，将 `ispm` 保持实验性标识，或先人工校对后再生成稳定资产。
+- `ispm`：已适配最新 OCR 题源目录并完成正式产物命名，可作为 0.2.2 变体输出。
+- 仍建议在发布前按抽样方式人工复核 OCR 识别质量与答案字段完整性。

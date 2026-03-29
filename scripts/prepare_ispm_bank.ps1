@@ -16,7 +16,12 @@ try {
       $has02 = Test-Path (Join-Path $dir '02-*')
       $has03 = Test-Path (Join-Path $dir '03-*')
       $hasPdf = (Get-ChildItem -Path $dir -Recurse -File -Filter '*.pdf' -ErrorAction SilentlyContinue | Select-Object -First 1) -ne $null
-      return $has01 -and $has02 -and $has03 -and $hasPdf
+      $legacyLayout = $has01 -and $has02 -and $has03
+      $pdfSubdirs = @(Get-ChildItem -Path $dir -Directory -ErrorAction SilentlyContinue | Where-Object {
+        (Get-ChildItem -Path $_.FullName -File -Filter '*.pdf' -ErrorAction SilentlyContinue | Select-Object -First 1) -ne $null
+      })
+      $newLayout = $pdfSubdirs.Count -ge 3
+      return ($legacyLayout -or $newLayout) -and $hasPdf
     } | Select-Object -First 1
     if ($null -eq $candidate) {
       throw "Cannot locate ISPM PDF root automatically. Pass -PdfRoot explicitly."
