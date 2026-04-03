@@ -16,7 +16,7 @@ from pathlib import Path
 Q_RE = re.compile(r"(?m)^\s*(\d{1,4})\.")
 Q_LABEL_RE = re.compile(r"问题\s*#\s*(\d{1,4})")
 ANS_RE = re.compile(r"(?:答案|正确答案|Answer|Correct\s*Answer)[:：]?\s*([A-F])", re.I)
-EXP_MARK_RE = re.compile(r"(?:解析|解释|Explanation)", re.I)
+EXP_MARK_RE = re.compile(r"(?mi)^\s*(?:解析|解释|Explanation)\s*[:：]")
 OPT_RE = re.compile(
     r"(?ms)(?:^|\n)\s*([A-F])(?:\s*[、\.)\]:：-]+\s*|\s+)(?=[\u4e00-\u9fa5A-Z0-9])(.*?)"
     r"(?=(?:\n\s*[A-F](?:\s*[、\.)\]:：-]+\s*|\s+)(?=[\u4e00-\u9fa5A-Z0-9]))|(?:\n\s*(?:答案|正确答案|Answer|Correct\s*Answer|解析|解释|Explanation))|\Z)",

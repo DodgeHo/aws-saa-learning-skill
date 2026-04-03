@@ -1,12 +1,13 @@
 {
   "bank": "ispm",
-  "generated_at": "2026-03-28T13:26:31.649317+00:00",
-  "questions": 769,
+  "generated_at": "2026-03-30T11:36:10.729184+00:00",
+  "questions": 810,
   "by_type": {
-    "objective": 715,
+    "objective": 756,
     "case": 42,
     "essay": 12
   },
+  "ocr_engine": "paddle",
   "pdf_root": "题库\\ISPM_ocr_pdfsandwich",
   "data_db": "assets\\banks\\ispm\\data.db",
   "questions_json": "assets\\banks\\ispm\\questions.json"

@@ -1,5 +1,9 @@
 param(
-  [string]$PdfRoot = ""
+  [string]$PdfRoot = "",
+  [ValidateSet('tesseract','paddle','auto')]
+  [string]$OcrEngine = 'tesseract',
+  [int]$MaxOcrPages = 32,
+  [switch]$PaddleUseGpu
 )
 
 $ErrorActionPreference = 'Stop'
@@ -29,7 +33,22 @@ try {
     $resolvedRoot = $candidate.FullName
   }
 
-  py scripts/build_ispm_bank_from_pdfs.py --pdf-root "$resolvedRoot" --template-db assets/data.db
+  $args = @(
+    'scripts/build_ispm_bank_from_pdfs.py'
+    '--pdf-root'
+    "$resolvedRoot"
+    '--template-db'
+    'assets/data.db'
+    '--ocr-engine'
+    $OcrEngine
+    '--max-ocr-pages'
+    "$MaxOcrPages"
+  )
+  if ($PaddleUseGpu.IsPresent) {
+    $args += '--paddle-use-gpu'
+  }
+
+  py @args
   if ($LASTEXITCODE -ne 0) {
     throw "Build ISPM bank assets failed"
   }

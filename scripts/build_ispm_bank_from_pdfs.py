@@ -26,8 +26,15 @@ HEADER_NOISE = (
     "全国计算机技术与软件专业技术资格",
     "信息系统项目管理师",
     "软考",
-    "第", 
 )
+
+TYPE_PRIORITY = {
+    "objective": 0,
+    "case": 1,
+    "essay": 2,
+}
+
+_PADDLE_OCR = None
 
 
 def resolve_tool(tool_name: str) -> str:
@@ -74,7 +81,14 @@ def normalize_text(text: str) -> str:
         s = raw.strip()
         if not s:
             continue
+        # OCR often inserts random spaces inside Chinese phrases.
+        s = re.sub(r"\s+", " ", s)
+        s = re.sub(r"(?<=[\u4e00-\u9fff])\s+(?=[\u4e00-\u9fff])", "", s)
+        s = re.sub(r"(?<=[\u4e00-\u9fff])\s+(?=[，。！？；：、）】》])", "", s)
+        s = re.sub(r"(?<=[（【《])\s+(?=[\u4e00-\u9fff])", "", s)
         if any(key in s for key in HEADER_NOISE) and len(s) < 28:
+            continue
+        if re.fullmatch(r"第\s*\d+\s*页", s):
             continue
         if re.fullmatch(r"\d+", s):
             continue
@@ -82,7 +96,13 @@ def normalize_text(text: str) -> str:
     return "\n".join(lines).strip()
 
 
-def extract_pdf_text(pdf_path: Path) -> str:
+def extract_pdf_text(
+    pdf_path: Path,
+    *,
+    ocr_engine: str = "tesseract",
+    max_ocr_pages: int = 32,
+    paddle_use_gpu: bool = False,
+) -> str:
     # 1) Try pypdf text layer.
     chunks = []
     try:
@@ -116,7 +136,12 @@ def extract_pdf_text(pdf_path: Path) -> str:
         pass
 
     # 3) OCR fallback for scanned PDFs.
-    return ocr_pdf_text(pdf_path)
+    return ocr_pdf_text(
+        pdf_path,
+        max_pages=max_ocr_pages,
+        engine=ocr_engine,
+        paddle_use_gpu=paddle_use_gpu,
+    )
 
 
 def _tesseract_lang() -> str:
@@ -138,39 +163,107 @@ def _tesseract_lang() -> str:
     return "eng"
 
 
-def ocr_pdf_text(pdf_path: Path, max_pages: int = 32) -> str:
-    lang = _tesseract_lang()
-    chunks: list[str] = []
+def _render_pdf_pages(pdf_path: Path, tmp_dir: Path, max_pages: int) -> list[Path]:
     pdftoppm = resolve_tool("pdftoppm")
+
+    prefix = tmp_dir / "page"
+    render = subprocess.run(
+        [pdftoppm, "-r", "190", "-png", str(pdf_path), str(prefix)],
+        capture_output=True,
+        check=False,
+    )
+    if render.returncode != 0:
+        return []
+
+    return sorted(tmp_dir.glob("page-*.png"))[:max_pages]
+
+
+def _ocr_images_with_tesseract(images: list[Path]) -> str:
+    lang = _tesseract_lang()
     tesseract = resolve_tool("tesseract")
+    chunks: list[str] = []
 
-    with tempfile.TemporaryDirectory(prefix="ispm_ocr_") as tmp:
-        tmp_dir = Path(tmp)
-        prefix = tmp_dir / "page"
-
-        render = subprocess.run(
-            [pdftoppm, "-r", "190", "-png", str(pdf_path), str(prefix)],
+    for img in images:
+        ocr = subprocess.run(
+            [tesseract, str(img), "stdout", "-l", lang, "--psm", "6"],
             capture_output=True,
             check=False,
         )
-        if render.returncode != 0:
-            return ""
-
-        images = sorted(tmp_dir.glob("page-*.png"))[:max_pages]
-        for img in images:
-            ocr = subprocess.run(
-                [tesseract, str(img), "stdout", "-l", lang, "--psm", "6"],
-                capture_output=True,
-                check=False,
-            )
-            if ocr.returncode != 0:
-                continue
-            ocr_text = (ocr.stdout or b"").decode("utf-8", errors="ignore")
-            text = normalize_text(ocr_text)
-            if text:
-                chunks.append(text)
+        if ocr.returncode != 0:
+            continue
+        ocr_text = (ocr.stdout or b"").decode("utf-8", errors="ignore")
+        text = normalize_text(ocr_text)
+        if text:
+            chunks.append(text)
 
     return "\n".join(chunks).strip()
+
+
+def _ocr_images_with_paddle(images: list[Path], use_gpu: bool = False) -> str:
+    global _PADDLE_OCR
+
+    if _PADDLE_OCR is None:
+        try:
+            from paddleocr import PaddleOCR  # type: ignore
+        except Exception as exc:  # pragma: no cover
+            raise RuntimeError(
+                "PaddleOCR is not installed. Install with: pip install paddleocr paddlepaddle"
+            ) from exc
+        _PADDLE_OCR = PaddleOCR(use_angle_cls=True, lang="ch", use_gpu=use_gpu)
+
+    chunks: list[str] = []
+    for img in images:
+        result = _PADDLE_OCR.ocr(str(img), cls=True)
+        if not result:
+            continue
+
+        lines: list[str] = []
+        for page in result:
+            if not page:
+                continue
+            for cell in page:
+                if len(cell) < 2:
+                    continue
+                text = cell[1][0] if cell[1] else ""
+                if text:
+                    lines.append(text)
+
+        merged = normalize_text("\n".join(lines))
+        if merged:
+            chunks.append(merged)
+
+    return "\n".join(chunks).strip()
+
+
+def ocr_pdf_text(
+    pdf_path: Path,
+    max_pages: int = 32,
+    *,
+    engine: str = "tesseract",
+    paddle_use_gpu: bool = False,
+) -> str:
+    chunks: list[str] = []
+
+    with tempfile.TemporaryDirectory(prefix="ispm_ocr_") as tmp:
+        tmp_dir = Path(tmp)
+        images = _render_pdf_pages(pdf_path, tmp_dir, max_pages)
+        if not images:
+            return ""
+
+        if engine == "paddle":
+            return _ocr_images_with_paddle(images, use_gpu=paddle_use_gpu)
+        if engine == "tesseract":
+            return _ocr_images_with_tesseract(images)
+        if engine == "auto":
+            try:
+                text = _ocr_images_with_paddle(images, use_gpu=paddle_use_gpu)
+                if text:
+                    return text
+            except Exception:
+                pass
+            return _ocr_images_with_tesseract(images)
+
+        raise ValueError(f"unsupported ocr engine: {engine}")
 
 
 def split_objective_blocks(text: str) -> list[str]:
@@ -225,6 +318,10 @@ def split_essay_blocks(text: str) -> list[str]:
 def parse_objective(block: str):
     ans_match = re.search(r"(?:答案|参考答案|正确答案)\s*[】\]:：\s\(（]*([A-F])", block, re.I)
     correct = ans_match.group(1).upper() if ans_match else None
+    if not correct:
+        compact = re.sub(r"\s+", "", block)
+        ans_match2 = re.search(r"(?:答案|参考答案|正确答案)[】\]:：\(（]*([A-F])", compact, re.I)
+        correct = ans_match2.group(1).upper() if ans_match2 else None
 
     split = re.split(r"(?:答案|参考答案|正确答案|要点点评|解析)\s*[】\]:：]", block, maxsplit=1)
     prompt = split[0].strip()
@@ -239,6 +336,7 @@ def parse_objective(block: str):
             content_start = om.end()
             content_end = option_matches[i + 1].start() if i + 1 < len(option_matches) else len(prompt)
             content = prompt[content_start:content_end].strip()
+            content = re.split(r"\n\s*[【\[]", content, maxsplit=1)[0].strip()
             if content:
                 options.append(f"{label}. {content}")
     else:
@@ -253,6 +351,7 @@ def parse_objective(block: str):
             for om in fallback_options:
                 label = om.group(1).upper()
                 content = om.group(2).strip()
+                content = re.split(r"\n\s*[【\[]", content, maxsplit=1)[0].strip()
                 if content:
                     options.append(f"{label}. {content}")
         else:
@@ -301,16 +400,36 @@ def find_source_pdfs(root: Path) -> list[Path]:
         if "无答案" in name:
             continue
         selected.append(pdf)
-    return selected
+
+    def key(pdf: Path):
+        qtype = classify_from_path(pdf)
+        year_m = re.search(r"(20\d{2})", pdf.name)
+        year = int(year_m.group(1)) if year_m else 9999
+        batch_m = re.search(r"第\s*(\d+)\s*批", pdf.name)
+        batch = int(batch_m.group(1)) if batch_m else 0
+        return (TYPE_PRIORITY.get(qtype, 9), year, batch, pdf.name)
+
+    return sorted(selected, key=key)
 
 
-def build_rows(pdf_root: Path) -> list[dict]:
+def build_rows(
+    pdf_root: Path,
+    *,
+    ocr_engine: str,
+    max_ocr_pages: int,
+    paddle_use_gpu: bool,
+) -> list[dict]:
     rows = []
     qid = 1
 
     for pdf in find_source_pdfs(pdf_root):
         qtype = classify_from_path(pdf)
-        text = extract_pdf_text(pdf)
+        text = extract_pdf_text(
+            pdf,
+            ocr_engine=ocr_engine,
+            max_ocr_pages=max_ocr_pages,
+            paddle_use_gpu=paddle_use_gpu,
+        )
         if not text:
             continue
 
@@ -399,6 +518,14 @@ def main() -> None:
     parser.add_argument("--pdf-root", required=True, help="ISPM PDF root directory")
     parser.add_argument("--template-db", default="assets/data.db", help="Template DB path")
     parser.add_argument("--out-root", default="assets/banks", help="Output bank root")
+    parser.add_argument(
+        "--ocr-engine",
+        choices=["tesseract", "paddle", "auto"],
+        default="tesseract",
+        help="OCR backend for scanned pages",
+    )
+    parser.add_argument("--max-ocr-pages", type=int, default=32, help="Max pages OCR per PDF")
+    parser.add_argument("--paddle-use-gpu", action="store_true", help="Enable PaddleOCR GPU mode")
     args = parser.parse_args()
 
     pdf_root = Path(args.pdf_root)
@@ -410,7 +537,12 @@ def main() -> None:
     if not template_db.exists():
         raise FileNotFoundError(f"template db not found: {template_db}")
 
-    rows = build_rows(pdf_root)
+    rows = build_rows(
+        pdf_root,
+        ocr_engine=args.ocr_engine,
+        max_ocr_pages=args.max_ocr_pages,
+        paddle_use_gpu=args.paddle_use_gpu,
+    )
     if not rows:
         raise RuntimeError("No ISPM questions parsed from PDFs")
 
@@ -434,6 +566,7 @@ def main() -> None:
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "questions": len(rows),
         "by_type": by_type,
+        "ocr_engine": args.ocr_engine,
         "pdf_root": str(pdf_root),
         "data_db": str(out_db),
         "questions_json": str(out_json),
