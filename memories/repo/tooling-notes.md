@@ -1,0 +1,2 @@
+- PowerShell 5 may misparse non-ASCII literals in .ps1 without BOM. For resilient scripts, avoid hard-coded Chinese directory names and detect structure instead.
+- ISPM OCR source currently maps reliably by folder layout (three PDF-bearing subdirectories) plus parser-side path keyword fallback.
