@@ -1,0 +1,32 @@
+[
+  {
+    "id": 279,
+    "q_num": "279",
+    "source_doc": "ISPM:objective:2022年上半年考试试题【有答案版】_ocr.pdf#66",
+    "bank_answer": "D",
+    "bank_option_count": 3,
+    "docx_block_id": 278,
+    "docx_year_half": "2022年上半年",
+    "docx_q_num": 69,
+    "docx_answer": null,
+    "docx_option_count": 2,
+    "match_score": 0.3786,
+    "answer_status": "na",
+    "needs_review": true
+  },
+  {
+    "id": 511,
+    "q_num": "511",
+    "source_doc": "ISPM:objective:2024年上半年考试试题（第1批）【有答案版】_ocr.pdf#50",
+    "bank_answer": "D",
+    "bank_option_count": 4,
+    "docx_block_id": 580,
+    "docx_year_half": "2024年上半年",
+    "docx_q_num": 51,
+    "docx_answer": "D",
+    "docx_option_count": 4,
+    "match_score": 0.288,
+    "answer_status": "same",
+    "needs_review": true
+  }
+]

@@ -1,5 +1,14 @@
 ﻿# Changelog
 
+## 0.2.3 - 2026-04-04
+- ISPM bank quality completion:
+  - completed DeepSeek-assisted proofreading pass for objective set with resumable batching
+  - fixed remaining missing objective answer (`id=188`) based on explanation consistency
+  - verified publish readiness: 810 total questions (`objective=756`, `case=42`, `essay=12`), no missing objective answers
+- Release packaging:
+  - bumped app version to `0.2.3+10`
+  - packaged Android bank variants for `saa`, `sap`, and `ispm` under `release/banks/`
+
 ## 0.2.2 - 2026-03-28
 - ISPM bank rebuild from corrected OCR source set:
   - updated ISPM parser to support new source layout (`选择题` / `案例题` / `论文题`)

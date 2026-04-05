@@ -1,0 +1,5 @@
+﻿group,id,q_num,source_doc,bank_answer,docx_answer,match_score,answer_status,needs_review
+answer_mismatch,531,531,ISPM:objective:2024年上半年考试试题（第1批）【有答案版】_ocr.pdf#70,B,C,0.2838,mismatch,True
+answer_mismatch,596,596,ISPM:objective:2024年上半年考试试题（第2批）【有答案版】_ocr.pdf#61,A,C,0.303,mismatch,True
+weak_match,279,279,ISPM:objective:2022年上半年考试试题【有答案版】_ocr.pdf#66,D,,0.3786,na,True
+weak_match,511,511,ISPM:objective:2024年上半年考试试题（第1批）【有答案版】_ocr.pdf#50,D,D,0.288,same,True

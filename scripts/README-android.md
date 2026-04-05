@@ -175,3 +175,42 @@ py -m pip install pypdf
 - `sap`：已完成 PDF 抽取与资产生成，可作为 0.2.0 变体输出。
 - `ispm`：已适配最新 OCR 题源目录并完成正式产物命名，可作为 0.2.2 变体输出。
 - 仍建议在发布前按抽样方式人工复核 OCR 识别质量与答案字段完整性。
+
+### 9.6 使用 DeepSeek 批量校对题干语句（可选）
+
+用途：批量修复题干/选项/解析中的中文格式问题与语句不通顺问题，不改题意与答案字母。
+
+1) 设置 API Key（建议环境变量，不要写进代码仓库）：
+
+```powershell
+$env:DEEPSEEK_API_KEY = "<your-key>"
+```
+
+2) 先生成建议文件（不直接改题库）：
+
+```powershell
+py .\scripts\proofread_ispm_with_deepseek.py `
+	--input assets\banks\ispm\questions.json `
+	--output reports\ispm_deepseek_suggestions.json `
+	--type objective `
+	--start-id 1 --end-id 999999 `
+	--batch-size 15
+```
+
+3) 人工看过建议后再应用：
+
+```powershell
+py .\scripts\proofread_ispm_with_deepseek.py `
+	--input assets\banks\ispm\questions.json `
+	--output reports\ispm_deepseek_suggestions.json `
+	--type objective `
+	--batch-size 15 `
+	--apply
+```
+
+断点续作：脚本默认开启，进度文件默认为 `reports/ispm_deepseek_suggestions.json.resume.json`。
+- 中断后直接重跑同一命令，会自动跳过已完成批次。
+- 若要强制重头开始，加 `--restart`。
+- 也可自定义进度文件路径：`--resume-file reports\ispm_resume_group1.json`。
+
+建议：先按题号区间分组跑（例如 `--start-id 1 --end-id 120`），每组审核后再应用。
