@@ -12,12 +12,37 @@ import 'app_model.dart';
 import 'db.dart';
 import 'models.dart';
 
-void main() {
-  runApp(const AwsSaaTrainerApp());
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  final bank = await _loadActiveBank();
+  runApp(AwsSaaTrainerApp(activeBank: bank));
+}
+
+Future<String> _loadActiveBank() async {
+  try {
+    final marker = (await rootBundle.loadString('assets/active_bank.txt')).trim().toLowerCase();
+    if (marker == 'sap' || marker == 'ispm') return marker;
+  } catch (_) {
+    // Fallback to default bank when asset is unavailable.
+  }
+  return 'saa';
+}
+
+String _appTitleForBank(String bank) {
+  switch (bank) {
+    case 'sap':
+      return 'SAP 练习';
+    case 'ispm':
+      return 'ISPM 练习';
+    default:
+      return 'SAA 练习';
+  }
 }
 
 class AwsSaaTrainerApp extends StatelessWidget {
-  const AwsSaaTrainerApp({super.key});
+  const AwsSaaTrainerApp({super.key, required this.activeBank});
+
+  final String activeBank;
 
   ThemeData _buildTheme() {
     final base = ThemeData(
@@ -46,6 +71,7 @@ class AwsSaaTrainerApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final appTitle = _appTitleForBank(activeBank);
     return ChangeNotifierProvider(
       create: (_) {
         final model = AppModel();
@@ -53,16 +79,18 @@ class AwsSaaTrainerApp extends StatelessWidget {
         return model;
       },
       child: MaterialApp(
-        title: 'SAA 练习',
+        title: appTitle,
         theme: _buildTheme(),
-        home: const MainScaffold(),
+        home: MainScaffold(appTitle: appTitle),
       ),
     );
   }
 }
 
 class MainScaffold extends StatefulWidget {
-  const MainScaffold({super.key});
+  const MainScaffold({super.key, required this.appTitle});
+
+  final String appTitle;
 
   @override
   State<MainScaffold> createState() => _MainScaffoldState();
@@ -176,7 +204,7 @@ class _MainScaffoldState extends State<MainScaffold> {
       appBar: AppBar(
         toolbarHeight: isCompact ? 48 : null,
         titleSpacing: isCompact ? 8 : null,
-        title: isCompact ? null : const Text('SAA 练习'),
+        title: isCompact ? null : Text(widget.appTitle),
         actions: [
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),

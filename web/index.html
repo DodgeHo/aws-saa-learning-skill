@@ -18,19 +18,43 @@
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="SAA 练习，提供 AWS SAA-C03 中文题库刷题与 AI 讲解。支持标记、筛选、收藏与学习进度追踪。">
+  <meta name="description" content="认证题库练习，支持 SAA / SAP / ISPM 多题库刷题与学习进度追踪。">
 
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="SAA 练习">
+  <meta name="apple-mobile-web-app-title" content="题库练习">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
 
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png"/>
 
-  <title>SAA 练习</title>
+  <title>题库练习</title>
   <link rel="manifest" href="manifest.json">
+  <script>
+    (function () {
+      var map = {
+        saa: 'SAA 练习',
+        sap: 'SAP 练习',
+        ispm: 'ISPM 练习'
+      };
+      fetch('assets/active_bank.txt', { cache: 'no-store' })
+        .then(function (res) { return res.text(); })
+        .then(function (txt) {
+          var bank = (txt || '').trim().toLowerCase();
+          var title = map[bank] || '题库练习';
+          document.title = title;
+
+          var appleTitle = document.querySelector('meta[name="apple-mobile-web-app-title"]');
+          if (appleTitle) {
+            appleTitle.setAttribute('content', title);
+          }
+        })
+        .catch(function () {
+          // Keep default title on fetch failure.
+        });
+    })();
+  </script>
 </head>
 <body>
   <!--
