@@ -1,5 +1,18 @@
 ﻿# Changelog
 
+## 0.2.4 - 2026-04-06
+- Bank-specific naming fix:
+  - app title now follows active bank (`SAA 练习` / `SAP 练习` / `ISPM 练习`) instead of always showing SAA
+  - web title now resolves dynamically by `assets/active_bank.txt`
+- Windows variant packaging:
+  - added `scripts/build_windows_bank_variant.ps1` for per-bank Windows artifacts
+  - Windows executables are now bank-specific in packaged outputs:
+    - `aws_saa_trainer.exe`
+    - `aws_sap_trainer.exe`
+    - `ispm_trainer.exe`
+- Release packaging:
+  - bumped app version to `0.2.4+11`
+
 ## 0.2.3 - 2026-04-04
 - ISPM bank quality completion:
   - completed DeepSeek-assisted proofreading pass for objective set with resumable batching
